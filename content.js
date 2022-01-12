@@ -26,13 +26,13 @@ let users = [];
 
 // loadUsers from JSONPLACEHOLDER API
 const loadUsers = async (url) => {
-	const response = await $.ajax(url);
+	const response = await fetch(url);
 	const users = await response.json();
 	return users;
 };
 
 // LOAD USERS AND SAVE THEM TO GLOBAL VARIABLE 'USERS'
-window.addEventListener('load', async () => {
+window.onload = async () => {
 	users = await loadUsers(BASE_URL);
 
 	// GET 'TOODS' DATA FROM LOCAL SERVER
@@ -66,7 +66,7 @@ window.addEventListener('load', async () => {
 			},
 		});
 	});
-});
+}
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
@@ -116,11 +116,11 @@ input.addEventListener('change', () => {
 	}
 });
 
-// // WASM SECTION : LOAD WASM : hello.wasm file
-// // const go = new Go();
+// WASM SECTION : LOAD WASM : hello.wasm file
+const go = new Go();
 
-// // WebAssembly.instantiateStreaming(fetch("http://localhost:9090/hello.wasm"), go.importObject).then(
-// // 	(result) => {
-// // 		go.run(result.instance);
-// // 	}
-// // );
+WebAssembly.instantiateStreaming(fetch("http://localhost:9090/hello.wasm"), go.importObject).then(
+	(result) => {
+		go.run(result.instance);
+	}
+)
