@@ -11,11 +11,11 @@ In order to enable correctely this extension into Firefox, you have to have some
 * Make sure to add the `C:\Program Files\Go\bin` and the `C:\tinygo\bin` to your PATH environment variable
 
 ## Step 1: Compile your GO file to WebAssembly
-The bellowed command is executed in the root folder in order to compile the `main.go` to get the wasm equivalent `main.wasm` in the `assets` folder.
+The bellowed command is executed in the `wasm` folder in order to compile the `main.go` to get the wasm equivalent `hello.wasm` in the `wasm/assets` folder.
 Note that tinygo is used to get ***tiny*** wasm file size. In my case it tooks only **181KB** for the `main.wasm` file size wherease if we use the built in go way it generates wasm file size with almost **2MB** of size.
 
 ```shell
-tinygo build -o ./assets/main.wasm -target wasm ./main.go
+cd wasm && tinygo build -o ./assets/hello.wasm -target wasm ./main.go
 ```
 
 ## Step 2: Install npm packages
