@@ -119,7 +119,7 @@ input.addEventListener('change', () => {
 // WASM SECTION : LOAD WASM : hello.wasm file
 const go = new Go();
 
-WebAssembly.instantiateStreaming(fetch("http://localhost:9090/hello.wasm"), go.importObject).then(
+WebAssembly.instantiateStreaming(fetch("http://localhost:9090/main.wasm"), go.importObject).then(
 	(result) => {
 		go.run(result.instance);
 	}

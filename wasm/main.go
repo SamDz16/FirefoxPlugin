@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello Wasm in chrome extension")
+	fmt.Println("Hello i am WASM function loaded in Firefow extension")
 }
