@@ -1,3 +1,14 @@
+// ##################################################################################################################################################################### //
+// WASM SECTION - LOAD WASM
+const go = new Go();
+
+WebAssembly.instantiateStreaming(
+	fetch('http://localhost:9090/fetch.wasm'),
+	go.importObject
+).then((result) => {
+	go.run(result.instance);
+});
+
 // #################################################################################### PART 1 ################################################################################# //
 // Create a div element to contain label and input
 const div = document.createElement('div');
@@ -66,7 +77,37 @@ window.onload = async () => {
 			},
 		});
 	});
-}
+
+	const btnFetch = document.createElement('button');
+	const hrFetch = document.createElement('hr');
+	btnFetch.classList.add('btn', 'btn-outline-primary', 'm-2');
+	btnFetch.textContent = 'GO &WASM with HTTP Requests';
+	document.querySelector('#main').append(hrFetch, btnFetch);
+
+	btnFetch.addEventListener('click', async () => {
+		let endpoint = 'https://dbpedia.org/sparql';
+		let query = 'select distinct ?Concept where {[] a ?Concept} LIMIT 100';
+		try {
+			const response = await fetchDBPedia(endpoint, query);
+
+			// Response is in XML format
+			const str = await response.text();
+			const data = await new window.DOMParser().parseFromString(
+				str,
+				'text/xml'
+			);
+			const results = data.getElementsByTagName('uri');
+			document.querySelector('#main').innerHTML += '<h1>The results are :</h1>';
+			let res = '';
+			for (result of results) {
+				res += result.textContent + ' | ';
+			}
+			document.querySelector('#main').append(res);
+		} catch (err) {
+			console.error('Caught exception', err);
+		}
+	});
+};
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
@@ -115,12 +156,3 @@ input.addEventListener('change', () => {
 		});
 	}
 });
-
-// WASM SECTION : LOAD WASM : hello.wasm file
-const go = new Go();
-
-WebAssembly.instantiateStreaming(fetch("http://localhost:9090/main.wasm"), go.importObject).then(
-	(result) => {
-		go.run(result.instance);
-	}
-)
