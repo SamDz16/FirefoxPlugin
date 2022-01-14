@@ -30,57 +30,6 @@ const executeQuery = document.querySelector('#run');
 executeQuery.insertAdjacentElement('beforeBegin', isFailingDiv);
 
 // #################################################################################### PART 2 ################################################################################# //
-// JSON PLACEHOLDER API
-// const BASE_URL = 'https://jsonplaceholder.typicode.com/users?_limit=5';
-// let users = [];
-
-// // loadUsers from JSONPLACEHOLDER API
-// const loadUsers = async (url) => {
-// 	const response = await fetch(url);
-// 	const users = await response.json();
-// 	return users;
-// };
-
-// window.onload = async () => {
-// 	// fetch users
-// 	// users = await loadUsers(BASE_URL);
-
-// 	const btnFetch = document.createElement('button');
-// 	const hrFetch = document.createElement('hr');
-// 	btnFetch.classList.add('btn', 'btn-outline-primary', 'm-2');
-// 	btnFetch.textContent = 'GO &WASM with HTTP Requests';
-// 	document.querySelector('#main').append(hrFetch, btnFetch);
-
-// 	btnFetch.addEventListener('click', async () => {
-// 		let endpoint = 'https://dbpedia.org/sparql';
-// 		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
-// 		let query = document.querySelector("#query").textContent
-// 		try {
-// 			const response = await executeSPARQLQuery(endpoint, query);
-
-// 			// Response is in XML format
-// 			const str = await response.text();
-// 			const data = await new window.DOMParser().parseFromString(
-// 				str,
-// 				'text/xml'
-// 			);
-// 			const results = data.getElementsByTagName('uri');
-
-// 			const isfailing = isFailing(results.length)
-			
-// 			if(isfailing === 1) {
-// 				// There is no results
-// 				document.querySelector('#main').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
-// 			} else {
-// 				// There is at least one result
-// 				document.querySelector('#main').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
-// 			}
-// 		} catch (err) {
-// 			console.error('Caught exception', err);
-// 		}
-// 	});
-// };
-
 let resultsInput = document.createElement('input');
 let rootDiv = document.createElement('div');
 
@@ -90,31 +39,32 @@ let luisAlgorithmsChecked = false;
 const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
 
-	let results = []
+	let results = [];
 
 	// Grab the results
 	let endpoint = 'https://dbpedia.org/sparql';
 	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
-	let query = document.querySelector("#query").textContent
+	let query = document.querySelector('#query').textContent.toString();
 	try {
 		const response = await executeSPARQLQuery(endpoint, query);
 
 		// Response is in XML format
 		const str = await response.text();
-		const data = await new window.DOMParser().parseFromString(
-			str,
-			'text/xml'
-		);
+		const data = await new window.DOMParser().parseFromString(str, 'text/xml');
 		results = data.getElementsByTagName('uri');
 
-		const isfailing = isFailing(results.length)
-		
-		if(isfailing === 1) {
+		const isfailing = isFailing(results.length);
+
+		if (isfailing === 1) {
 			// There is no results
-			document.querySelector('fieldset').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector(
+				'fieldset'
+			).innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
 		} else {
 			// There is at least one result
-			document.querySelector('fieldset').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector(
+				'fieldset'
+			).innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
 
 			// Create a div element to contain label and input
 			const resultsDiv = document.createElement('div');
@@ -134,7 +84,7 @@ const isFailingAlgorithm = async (e) => {
 			document.querySelector('fieldset').append(resultsDiv);
 
 			// By default, the results are hidden
-			rootDiv.setAttribute("style", "display: none");
+			rootDiv.setAttribute('style', 'display: none');
 
 			rootDiv.id = 'rootResults';
 			rootDiv.innerHTML = `<h2>Results</h2> <hr>`;
@@ -145,13 +95,12 @@ const isFailingAlgorithm = async (e) => {
 
 			resultDiv.setAttribute('v-for', 'result in results');
 			resultDiv.innerHTML = `
-				<p>{{ result.textContent }}</p>
+				<p><a :href=result.textContent>{{ result.textContent }}</a></p>
 			`;
 			document
 				.querySelector('#options')
 				.insertAdjacentElement('beforebegin', rootDiv);
 
-			console.log(results);
 			// Create Vue component
 			new Vue({
 				el: '#rootResults',
@@ -181,12 +130,14 @@ isFailingInput.addEventListener('change', () => {
 	}
 });
 
-resultsInput.addEventListener("change", () => {
-	if(resultsInput.checked) {
-		console.log(resultsInput.checked)
-		rootDiv.setAttribute("style", "display: block");
+resultsInput.addEventListener('change', () => {
+	if (resultsInput.checked) {
+		document
+			.querySelector('#rootResults')
+			.setAttribute('style', 'display: block');
 	} else {
-		console.log(resultsInput.checked)
-		rootDiv.setAttribute("style", "display: none");
+		document
+			.querySelector('#rootResults')
+			.setAttribute('style', 'display: none');
 	}
-})
+});
