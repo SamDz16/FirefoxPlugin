@@ -3,7 +3,7 @@
 const go = new Go();
 
 WebAssembly.instantiateStreaming(
-	fetch('http://localhost:9090/fetch.wasm'),
+	fetch('http://localhost:3000/fetch.wasm'),
 	go.importObject
 ).then((result) => {
 	go.run(result.instance);
@@ -11,163 +11,182 @@ WebAssembly.instantiateStreaming(
 
 // #################################################################################### PART 1 ################################################################################# //
 // Create a div element to contain label and input
-const div = document.createElement('div');
+const isFailingDiv = document.createElement('div');
 // Creat the label element
-const label = document.createElement('label');
-label.setAttribute('for', 'algo');
-label.append('Do you want to use Louise algorithms ?');
-label.style.marginLeft = '10px';
+const isFailingLabel = document.createElement('label');
+isFailingLabel.setAttribute('for', 'algo');
+isFailingLabel.append('Do you want to use isFailing ?');
+isFailingLabel.style.marginLeft = '10px';
 // Create the checkbox element
-const input = document.createElement('input');
-input.setAttribute('type', 'checkbox');
-input.setAttribute('id', 'algo');
-input.setAttribute('name', 'algo');
+const isFailingInput = document.createElement('input');
+isFailingInput.setAttribute('type', 'checkbox');
+isFailingInput.setAttribute('id', 'algo');
+isFailingInput.setAttribute('name', 'algo');
 // Apprnd the two elements to the div element
-div.append(input, label);
+isFailingDiv.append(isFailingInput, isFailingLabel);
 // Grab the Execute Query Button from "https://dbpedia.org/sparql"
 const executeQuery = document.querySelector('#run');
 // And then append the div element right before the execute query button
-executeQuery.insertAdjacentElement('beforeBegin', div);
+executeQuery.insertAdjacentElement('beforeBegin', isFailingDiv);
 
 // #################################################################################### PART 2 ################################################################################# //
-
 // JSON PLACEHOLDER API
-const BASE_URL = 'https://jsonplaceholder.typicode.com/users?_limit=5';
-let users = [];
+// const BASE_URL = 'https://jsonplaceholder.typicode.com/users?_limit=5';
+// let users = [];
 
-// loadUsers from JSONPLACEHOLDER API
-const loadUsers = async (url) => {
-	const response = await fetch(url);
-	const users = await response.json();
-	return users;
-};
+// // loadUsers from JSONPLACEHOLDER API
+// const loadUsers = async (url) => {
+// 	const response = await fetch(url);
+// 	const users = await response.json();
+// 	return users;
+// };
 
-// LOAD USERS AND SAVE THEM TO GLOBAL VARIABLE 'USERS'
-window.onload = async () => {
-	users = await loadUsers(BASE_URL);
+// window.onload = async () => {
+// 	// fetch users
+// 	// users = await loadUsers(BASE_URL);
 
-	// GET 'TOODS' DATA FROM LOCAL SERVER
-	const btn = document.createElement('button');
-	const hr = document.createElement('hr');
-	btn.id = 'todos-btn';
-	btn.classList.add('btn', 'btn-outline-primary', 'm-2');
-	btn.textContent = 'Load todos from local server';
-	document.querySelector('#main').append(hr, btn);
-	btn.addEventListener('click', async () => {
-		const response = await fetch('http://localhost:3000/api/todos');
-		const todos = await response.json();
-		console.log(todos);
-		const rootDiv = document.createElement('div');
-		rootDiv.id = 'rootTodos';
-		rootDiv.innerHTML = `<h2>List of Todos fetched from local server</h2> <hr>`;
-		rootDiv.classList.add('text-center');
-		const todoDiv = document.createElement('div');
-		rootDiv.append(todoDiv);
-		todoDiv.setAttribute('v-for', 'todo in todos');
-		todoDiv.innerHTML = `
-	        <h3>Todo title: {{ todo.title }}</h3>
-	        <p>Completed: {{ todo.completed }}</p>
-	    `;
-		btn.insertAdjacentElement('afterend', rootDiv);
-		// Create Vue component
-		new Vue({
-			el: '#rootTodos',
-			data: () => {
-				return { todos };
-			},
-		});
-	});
+// 	const btnFetch = document.createElement('button');
+// 	const hrFetch = document.createElement('hr');
+// 	btnFetch.classList.add('btn', 'btn-outline-primary', 'm-2');
+// 	btnFetch.textContent = 'GO &WASM with HTTP Requests';
+// 	document.querySelector('#main').append(hrFetch, btnFetch);
 
-	const btnFetch = document.createElement('button');
-	const hrFetch = document.createElement('hr');
-	btnFetch.classList.add('btn', 'btn-outline-primary', 'm-2');
-	btnFetch.textContent = 'GO &WASM with HTTP Requests';
-	document.querySelector('#main').append(hrFetch, btnFetch);
+// 	btnFetch.addEventListener('click', async () => {
+// 		let endpoint = 'https://dbpedia.org/sparql';
+// 		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
+// 		let query = document.querySelector("#query").textContent
+// 		try {
+// 			const response = await executeSPARQLQuery(endpoint, query);
 
-	btnFetch.addEventListener('click', async () => {
-		let endpoint = 'https://dbpedia.org/sparql';
-		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
-		let query = 'select distinct ?Concept where {[] a ?Concept} LIMIT 100';
-		try {
-			const response = await fetchDBPedia(endpoint, query);
+// 			// Response is in XML format
+// 			const str = await response.text();
+// 			const data = await new window.DOMParser().parseFromString(
+// 				str,
+// 				'text/xml'
+// 			);
+// 			const results = data.getElementsByTagName('uri');
 
-			// Response is in XML format
-			const str = await response.text();
-			const data = await new window.DOMParser().parseFromString(
-				str,
-				'text/xml'
-			);
-			const results = data.getElementsByTagName('uri');	
+// 			const isfailing = isFailing(results.length)
 			
-			if(isFailing(results)) {
-				// There is no results
-				document.querySelector('#main').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isFailing(results)}</b></h1>`;
-			} else {
-				// There is at least one result
-				document.querySelector('#main').innerHTML += '<h1 class="text-center text-success">The results are :</h1>';
-				document.querySelector('#main').innerHTML += `<p class="text-center text-success">isFailing returns: <b>${isFailing(results)}</b></p>`;
-				for (result of results) {
-					const a = document.createElement("a")
-					a.setAttribute("href", result.textContent)
-					a.textContent = result.textContent
-					document.querySelector('#main').append(a, document.createElement("br"));
-				}
-			}
-		} catch (err) {
-			console.error('Caught exception', err);
-		}
-	});
-};
+// 			if(isfailing === 1) {
+// 				// There is no results
+// 				document.querySelector('#main').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
+// 			} else {
+// 				// There is at least one result
+// 				document.querySelector('#main').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+// 			}
+// 		} catch (err) {
+// 			console.error('Caught exception', err);
+// 		}
+// 	});
+// };
 
-// ISFAILING ALGORITHM
-const isFailing = (results) => {
-	return results.length > 0 ? false : true
-}
+let resultsInput = document.createElement('input');
+let rootDiv = document.createElement('div');
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
 // GET TRIGGERED WHENEVER THE USER CLICKS ON THE 'EXECUTE QUERY' BUTTON
-const louiseAlgorithm = async (e) => {
+const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
 
-	const rootDiv = document.createElement('div');
-	rootDiv.id = 'rootUsers';
-	rootDiv.innerHTML = `<h2>List of users</h2> <hr>`;
-	rootDiv.classList.add('text-center');
+	let results = []
 
-	const userDiv = document.createElement('div');
-	rootDiv.append(userDiv);
+	// Grab the results
+	let endpoint = 'https://dbpedia.org/sparql';
+	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
+	let query = document.querySelector("#query").textContent
+	try {
+		const response = await executeSPARQLQuery(endpoint, query);
 
-	userDiv.setAttribute('v-for', 'user in users');
-	userDiv.innerHTML = `
-        <h3>{{ user.name }} {{ user.username }}</h3>
-        <p>{{ user.email }}</p>
-    `;
-	document
-		.querySelector('#options')
-		.insertAdjacentElement('beforebegin', rootDiv);
+		// Response is in XML format
+		const str = await response.text();
+		const data = await new window.DOMParser().parseFromString(
+			str,
+			'text/xml'
+		);
+		results = data.getElementsByTagName('uri');
 
-	console.log(users);
-	// Create Vue component
-	new Vue({
-		el: '#rootUsers',
-		data: () => {
-			return { users };
-		},
-	});
+		const isfailing = isFailing(results.length)
+		
+		if(isfailing === 1) {
+			// There is no results
+			document.querySelector('fieldset').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
+		} else {
+			// There is at least one result
+			document.querySelector('fieldset').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+
+			// Create a div element to contain label and input
+			const resultsDiv = document.createElement('div');
+			// Creat the label element
+			const resultsLabel = document.createElement('label');
+			resultsLabel.setAttribute('for', 'resultsLabel');
+			resultsLabel.append('Do you want to display results ?');
+			resultsLabel.style.marginLeft = '10px';
+			// Create the checkbox element
+			resultsInput.setAttribute('type', 'checkbox');
+			resultsInput.setAttribute('id', 'resultsLabel');
+			resultsInput.setAttribute('name', 'resultsLabel');
+			// Apprnd the two elements to the div element
+			resultsDiv.append(resultsInput, resultsLabel);
+
+			// And then append the div element right before the execute query button
+			document.querySelector('fieldset').append(resultsDiv);
+
+			// By default, the results are hidden
+			rootDiv.setAttribute("style", "display: none");
+
+			rootDiv.id = 'rootResults';
+			rootDiv.innerHTML = `<h2>Results</h2> <hr>`;
+			rootDiv.classList.add('text-center');
+
+			const resultDiv = document.createElement('div');
+			rootDiv.append(resultDiv);
+
+			resultDiv.setAttribute('v-for', 'result in results');
+			resultDiv.innerHTML = `
+				<p>{{ result.textContent }}</p>
+			`;
+			document
+				.querySelector('#options')
+				.insertAdjacentElement('beforebegin', rootDiv);
+
+			console.log(results);
+			// Create Vue component
+			new Vue({
+				el: '#rootResults',
+				data: () => {
+					return { results };
+				},
+			});
+		}
+	} catch (err) {
+		console.error('Caught exception', err);
+	}
 };
+
 // Add event listener to track whether the user would like to use the Luis algorithms or not
 // and modify a global variable
-input.addEventListener('change', () => {
-	luisAlgorithmsChecked = input.checked;
+isFailingInput.addEventListener('change', () => {
+	luisAlgorithmsChecked = isFailingInput.checked;
 
 	const sparqlForm = document.querySelector('#sparql_form');
 
 	if (luisAlgorithmsChecked) {
-		sparqlForm.addEventListener('submit', louiseAlgorithm);
+		sparqlForm.addEventListener('submit', isFailingAlgorithm);
 	} else {
-		sparqlForm.removeEventListener('submit', louiseAlgorithm, {
+		sparqlForm.removeEventListener('submit', isFailingAlgorithm, {
 			passive: true,
 		});
 	}
 });
+
+resultsInput.addEventListener("change", () => {
+	if(resultsInput.checked) {
+		console.log(resultsInput.checked)
+		rootDiv.setAttribute("style", "display: block");
+	} else {
+		console.log(resultsInput.checked)
+		rootDiv.setAttribute("style", "display: none");
+	}
+})

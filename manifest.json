@@ -8,7 +8,7 @@
 			"matches": ["https://dbpedia.org/sparql"],
 			"js": [
 				"libs/vuejs_lib.js",
-				"wasm/assets/wasm_exec.js",
+				"libs/wasm_exec.js",
 				"content.js"
 			]
 		}
