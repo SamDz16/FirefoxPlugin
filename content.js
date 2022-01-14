@@ -98,11 +98,14 @@ window.onload = async () => {
 			);
 			const results = data.getElementsByTagName('uri');
 			document.querySelector('#main').innerHTML += '<h1>The results are :</h1>';
-			let res = '';
+
+		
 			for (result of results) {
-				res += result.textContent + ' | ';
+				const a = document.createElement("a")
+				a.setAttribute("href", result.textContent)
+				a.textContent = result.textContent
+				document.querySelector('#main').append(a, document.createElement("br"));
 			}
-			document.querySelector('#main').append(res);
 		} catch (err) {
 			console.error('Caught exception', err);
 		}
