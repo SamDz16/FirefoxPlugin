@@ -3,8 +3,9 @@ This is a chrome/firefow extensions which gets triggered whenever user heads to 
 isFailing is an algorithm which returns:
 - 1: if there is a failing : no results were being fetched,
 - 0: if there is a success (no failing) : at leeast one result has been fetched
-- The user has possibility to display or not (hide) the results that were fetched in the case where isFailing is false.
-- 
+
+The user has possibility to display or not (hide) the results that were fetched in the case where isFailing is false.
+
 ## Installation
 In order to enable correctely this extension into Firefox, you have to have some prerequisites:
 * Have Chrome/Firefox installed in your machine (quite obvious xD)
