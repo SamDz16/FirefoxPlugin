@@ -86,6 +86,7 @@ window.onload = async () => {
 
 	btnFetch.addEventListener('click', async () => {
 		let endpoint = 'https://dbpedia.org/sparql';
+		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 		let query = 'select distinct ?Concept where {[] a ?Concept} LIMIT 100';
 		try {
 			const response = await fetchDBPedia(endpoint, query);
@@ -96,21 +97,32 @@ window.onload = async () => {
 				str,
 				'text/xml'
 			);
-			const results = data.getElementsByTagName('uri');
-			document.querySelector('#main').innerHTML += '<h1>The results are :</h1>';
-
-		
-			for (result of results) {
-				const a = document.createElement("a")
-				a.setAttribute("href", result.textContent)
-				a.textContent = result.textContent
-				document.querySelector('#main').append(a, document.createElement("br"));
+			const results = data.getElementsByTagName('uri');	
+			
+			if(isFailing(results)) {
+				// There is no results
+				document.querySelector('#main').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isFailing(results)}</b></h1>`;
+			} else {
+				// There is at least one result
+				document.querySelector('#main').innerHTML += '<h1 class="text-center text-success">The results are :</h1>';
+				document.querySelector('#main').innerHTML += `<p class="text-center text-success">isFailing returns: <b>${isFailing(results)}</b></p>`;
+				for (result of results) {
+					const a = document.createElement("a")
+					a.setAttribute("href", result.textContent)
+					a.textContent = result.textContent
+					document.querySelector('#main').append(a, document.createElement("br"));
+				}
 			}
 		} catch (err) {
 			console.error('Caught exception', err);
 		}
 	});
 };
+
+// ISFAILING ALGORITHM
+const isFailing = (results) => {
+	return results.length > 0 ? false : true
+}
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
