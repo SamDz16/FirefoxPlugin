@@ -32,6 +32,7 @@ executeQuery.insertAdjacentElement('beforeBegin', isFailingDiv);
 // #################################################################################### PART 2 ################################################################################# //
 let resultsInput = document.createElement('input');
 let rootDiv = document.createElement('div');
+const sparqlForm = document.querySelector('#sparql_form');
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
@@ -62,9 +63,7 @@ const isFailingAlgorithm = async (e) => {
 			).innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
 		} else {
 			// There is at least one result
-			document.querySelector(
-				'fieldset'
-			).innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector('fieldset:nth-of-type(2)').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
 
 			// Create a div element to contain label and input
 			const resultsDiv = document.createElement('div');
@@ -117,11 +116,9 @@ const isFailingAlgorithm = async (e) => {
 // Add event listener to track whether the user would like to use the Luis algorithms or not
 // and modify a global variable
 isFailingInput.addEventListener('change', () => {
-	luisAlgorithmsChecked = isFailingInput.checked;
+	console.log(isFailingInput.checked)
 
-	const sparqlForm = document.querySelector('#sparql_form');
-
-	if (luisAlgorithmsChecked) {
+	if (isFailingInput.checked) {
 		sparqlForm.addEventListener('submit', isFailingAlgorithm);
 	} else {
 		sparqlForm.removeEventListener('submit', isFailingAlgorithm, {
