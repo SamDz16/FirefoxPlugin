@@ -45,7 +45,7 @@ const isFailingAlgorithm = async (e) => {
 	// Grab the results
 	let endpoint = 'https://dbpedia.org/sparql';
 	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
-	let query = document.querySelector('#query').textContent.toString();
+	let query = document.querySelector('#query').value
 	try {
 		const response = await executeSPARQLQuery(endpoint, query);
 
@@ -58,12 +58,10 @@ const isFailingAlgorithm = async (e) => {
 
 		if (isfailing === 1) {
 			// There is no results
-			document.querySelector(
-				'fieldset'
-			).innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector('#options').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
 		} else {
 			// There is at least one result
-			document.querySelector('fieldset:nth-of-type(2)').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector('#options').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
 
 			// Create a div element to contain label and input
 			const resultsDiv = document.createElement('div');
@@ -116,7 +114,6 @@ const isFailingAlgorithm = async (e) => {
 // Add event listener to track whether the user would like to use the Luis algorithms or not
 // and modify a global variable
 isFailingInput.addEventListener('change', () => {
-	console.log(isFailingInput.checked)
 
 	if (isFailingInput.checked) {
 		sparqlForm.addEventListener('submit', isFailingAlgorithm);
