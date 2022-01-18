@@ -15,10 +15,10 @@ In order to enable correctely this extension into Firefox, you have to have some
 * Make sure to add the `C:\Program Files\Go\bin` to your PATH environment variable
 
 ## Step 1: Compile your GO file to WebAssembly
-The bellowed command is executed in the `wasm` folder in order to compile the `main.go` to get the wasm equivalent `fetch.wasm` in the `wasm/assets` folder.
+The bellowed command is executed in the root directory in order to compile the `RelaxAPI.go` to get the wasm equivalent `fetch.wasm` in the `./server/public` folder.
 
 ```shell
-GOOS=js GOARCH=wasm go build -o ./server/public/fetch.wasm ./main.go
+GOOS=js GOARCH=wasm go build -o ./server/public/fetch.wasm ./RelaxAPI.go
 ```
 
 ## Step 2: Install npm packages
