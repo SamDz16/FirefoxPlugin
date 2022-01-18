@@ -41,21 +41,32 @@ const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
 
 	let results = [];
+	var isfailing = 0;
 
 	// Grab the results
 	let endpoint = 'https://dbpedia.org/sparql';
 	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 	let query = document.querySelector('#query').value
 	try {
+		// CALLING THE ISFAILING ALGORITHM
+		isfailing = await isFailing(endpoint, query);
+
+		// CALLING THE EXECUTEQPARQLALGORITHM
 		const response = await executeSPARQLQuery(endpoint, query);
 
+		// FROM SPARQL RESULTS TO XML
+		const getXMLData = async (response) => {
+			const str = await response.text();
+			const data = await new window.DOMParser().parseFromString(str, 'text/xml');
+			const results = data.getElementsByTagName('uri');
+			isfailing = results.length === 0 ? 1 : 0
+			return results
+		}
+
 		// Response is in XML format
-		const str = await response.text();
-		const data = await new window.DOMParser().parseFromString(str, 'text/xml');
-		results = data.getElementsByTagName('uri');
-
-		const isfailing = isFailing(results.length);
-
+		results = await getXMLData(response)
+		
+		// TEST VALE OF ISFAILING
 		if (isfailing === 1) {
 			// There is no results
 			document.querySelector('#options').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
