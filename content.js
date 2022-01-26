@@ -49,8 +49,7 @@ const isFailingAlgorithm = async (e) => {
 	let query = document.querySelector('#query').value
 	try {
 		// CALLING THE ISFAILING ALGORITHM
-		isfailing = await isFailing(endpoint, query);
-
+		isfailing = await isFailing(endpoint, query)
 		// CALLING THE EXECUTEQPARQLALGORITHM
 		const response = await executeSPARQLQuery(endpoint, query);
 

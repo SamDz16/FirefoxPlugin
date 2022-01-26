@@ -9,12 +9,6 @@ app.use(
     })
 )
 
-app.use(express.static("public", {
-    setHeaders: (res, path) => {
-        if(path.endsWith(".wasm")) {
-            res.set("Content-Type", "application/wasm")
-        }
-    }
-}))
+app.use(express.static("public"))
 
 app.listen(3000, () => console.log("server app and listening on http://localhost:3000"))

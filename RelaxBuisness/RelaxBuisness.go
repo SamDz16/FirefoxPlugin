@@ -2,6 +2,7 @@ package RelaxBuisness
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -23,14 +24,18 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 
 	res, err := client.Do(r)
 	if err != nil {
-		println("ERROR")
+		log.Fatalln(err)
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return []byte{}
+	}
 
 	// Read the response body
 	dataBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		println("ERROR")
+		log.Fatalln(err)
 	}
 
 	return dataBody
@@ -38,7 +43,7 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 
 func IsFailing(requestUrl string, sparqlQuery string) int {
 
-	var dataBody []byte
+	var dataBody []byte = []byte{}
 
 	go func() {
 		dataBody = ExecuteSPARQLQuery(requestUrl, sparqlQuery)
@@ -47,6 +52,5 @@ func IsFailing(requestUrl string, sparqlQuery string) int {
 	if len(dataBody) == 0 {
 		return 1
 	}
-
 	return 0
 }

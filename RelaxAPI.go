@@ -68,4 +68,5 @@ func main() {
 	js.Global().Set("isFailing", isFailing())
 
 	<-c
+
 }
