@@ -12,20 +12,25 @@ WebAssembly.instantiateStreaming(
 // #################################################################################### PART 1 ################################################################################# //
 // Create a div element to contain label and input
 const isFailingDiv = document.createElement('div');
+
 // Creat the label element
 const isFailingLabel = document.createElement('label');
 isFailingLabel.setAttribute('for', 'algo');
 isFailingLabel.append('Do you want to use isFailing ?');
 isFailingLabel.style.marginLeft = '10px';
+
 // Create the checkbox element
 const isFailingInput = document.createElement('input');
 isFailingInput.setAttribute('type', 'checkbox');
 isFailingInput.setAttribute('id', 'algo');
 isFailingInput.setAttribute('name', 'algo');
+
 // Apprnd the two elements to the div element
 isFailingDiv.append(isFailingInput, isFailingLabel);
+
 // Grab the Execute Query Button from "https://dbpedia.org/sparql"
 const executeQuery = document.querySelector('#run');
+
 // And then append the div element right before the execute query button
 executeQuery.insertAdjacentElement('beforeBegin', isFailingDiv);
 
@@ -36,20 +41,27 @@ const sparqlForm = document.querySelector('#sparql_form');
 
 // Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
 let luisAlgorithmsChecked = false;
+
 // GET TRIGGERED WHENEVER THE USER CLICKS ON THE 'EXECUTE QUERY' BUTTON
 const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
+
+	const nbr = await Base("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }", 3)
+	console.log("nbr: ", nbr);
 
 	let results = [];
 	var isfailing = 0;
 
 	// Grab the results
 	let endpoint = 'https://dbpedia.org/sparql';
+
 	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 	let query = document.querySelector('#query').value
 	try {
+
 		// CALLING THE ISFAILING ALGORITHM
 		isfailing = await isFailing(endpoint, query)
+
 		// CALLING THE EXECUTEQPARQLALGORITHM
 		const response = await executeSPARQLQuery(endpoint, query);
 
@@ -67,23 +79,28 @@ const isFailingAlgorithm = async (e) => {
 		
 		// TEST VALE OF ISFAILING
 		if (isfailing === 1) {
+
 			// There is no results
 			document.querySelector('#options').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
 		} else {
+
 			// There is at least one result
 			document.querySelector('#options').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
 
 			// Create a div element to contain label and input
 			const resultsDiv = document.createElement('div');
+
 			// Creat the label element
 			const resultsLabel = document.createElement('label');
 			resultsLabel.setAttribute('for', 'resultsLabel');
 			resultsLabel.append('Do you want to display results ?');
 			resultsLabel.style.marginLeft = '10px';
+
 			// Create the checkbox element
 			resultsInput.setAttribute('type', 'checkbox');
 			resultsInput.setAttribute('id', 'resultsLabel');
 			resultsInput.setAttribute('name', 'resultsLabel');
+			
 			// Apprnd the two elements to the div element
 			resultsDiv.append(resultsInput, resultsLabel);
 

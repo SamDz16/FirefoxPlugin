@@ -1,3 +1,3 @@
-module buisness
+module Relaxbuisness
 
 go 1.16
