@@ -316,8 +316,7 @@ func RemoveQuery(listQueries []Query, index int) []Query {
 	return newListQueries
 }
 
-func Base(q string, K int) int {
-
+func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 	// Initialisations
 	// ##################################################################################################################################################################### //
 	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
@@ -330,7 +329,7 @@ func Base(q string, K int) int {
 	var listQueries []Query
 
 	// Executed Queries : contains for each qury, the number of the results
-	var executedQueries map[*Query]int = make(map[*Query]int)
+	var executedQueries map[*Query]byte = make(map[*Query]byte)
 
 	// List FIS : all rthe queries that fail
 	var listFIS map[*Query]bool = make(map[*Query]bool)
@@ -346,6 +345,7 @@ func Base(q string, K int) int {
 
 	SetSuperQueries(&listQueries)
 	var s int = 0
+	var count int = 0
 
 	for len(listQueries) != 0 {
 
@@ -355,43 +355,11 @@ func Base(q string, K int) int {
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		var Nb int
-
 		// go func() {
 		// Make HTTP request and save the results of the request in Nb
-		data := url.Values{}
-		data.Set("query", qTemp.query)
-
-		u, _ := url.ParseRequestURI("http://localhost:3030/base")
-		urlStr := u.String()
-
-		client := &http.Client{}
-		r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
-		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-		res, err := client.Do(r)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != 200 {
-			return 0
-		}
-
-		// Read the response body
-		dataBody, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		var XMLResponseData Sparql
-		xml.Unmarshal([]byte(dataBody), &XMLResponseData)
-
-		Nb = len(*&XMLResponseData.Results.Result)
-
 		// Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
-
+		Nb := NBs[s]
+		s++
 		// add qTemp to executedQueries list with the number Nb of the results
 		executedQueries[&qTemp] = Nb
 		// }()
@@ -401,13 +369,8 @@ func Base(q string, K int) int {
 		MakeQueries(qTemp.parents, &superQueries)
 
 		for _, mfis := range superQueries {
-			fmt.Println(s, " - superqueries: ", mfis)
-			s++
-		}
-
-		fmt.Println("executedQueries: ")
-		for k, v := range executedQueries {
-			fmt.Println("query: ", (*k).query, " nbr: ", v)
+			fmt.Println(count, " - superqueries: ", mfis)
+			count++
 		}
 
 		parentsFIS := true
@@ -447,8 +410,18 @@ func Base(q string, K int) int {
 		}
 	}
 
-	fmt.Println("list XSS: ", *listXSS)
-	fmt.Println("list MFIS: ", *listMFIS)
+	var xss []string
+	for _, x := range *listXSS {
+		xss = append(xss, x.query)
+	}
 
-	return len(executedQueries)
+	var mfis []string
+	for _, m := range *listMFIS {
+		mfis = append(mfis, m.query)
+	}
+
+	fmt.Println("xss: ", xss)
+	fmt.Println("mfis: ", mfis)
+
+	return xss, mfis, len(executedQueries)
 }

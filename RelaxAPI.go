@@ -2,30 +2,67 @@ package main
 
 import (
 	"Relaxbuisness/RelaxBuisness"
-	"encoding/xml"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/url"
 	"strings"
+	"unsafe"
 
 	"syscall/js"
 )
+
+func executeSPARQLQuery() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// Get the URL as argument
+		// args[0] is a js.Value, so we need to get a string out of it
+		requestUrl := args[0].String()
+		sparqlQuery := args[1].String()
+
+		// Handler for the Promise
+		// We need to return a Promise because HTTP requests are blocking in Go
+		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			resolve := args[0]
+			// reject := args[1]
+
+			// Run this code asynchronously
+			go func() {
+
+				dataBody := RelaxBuisness.ExecuteSPARQLQuery(requestUrl, sparqlQuery)
+
+				// "dataBody" is a byte slice, so we need to convert it to a JS Uint8Array object
+				arrayConstructor := js.Global().Get("Uint8Array")
+				dataJS := arrayConstructor.New(len(dataBody))
+				js.CopyBytesToJS(dataJS, dataBody)
+
+				// Create a Response object and pass the data
+				responseConstructor := js.Global().Get("Response")
+				response := responseConstructor.New(dataJS)
+
+				// Resolve the Promise
+				resolve.Invoke(response)
+			}()
+
+			// The handler of a Promise doesn't return any value
+			return nil
+		})
+
+		// Create and return the Promise object
+		promiseConstructor := js.Global().Get("Promise")
+		return promiseConstructor.New(handler)
+	})
+}
+
+func isFailing() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+
+		requestUrl := args[0].String()
+		sparqlQuery := args[1].String()
+
+		return RelaxBuisness.IsFailing(requestUrl, sparqlQuery)
+	})
+}
 
 type Query struct {
 	query   string
 	parents []string
 }
-
-type Sparql struct {
-	Results *Results `xml:"results"`
-}
-type Results struct {
-	Result []Result `xml:"result"`
-}
-
-type Result struct{}
 
 func GetQueryTripplePatterns(initialQuery Query) []string {
 	triplePatternsStr := ""
@@ -119,15 +156,19 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 	return combinations
 }
 
-func MakeQueries(tripplePatterns []string, queries *[]Query) {
+func MakeQueries(tripplePatterns []string) []string {
+	var res []string
+
 	for _, t := range tripplePatterns {
-		var q Query
-		q.query = "select * where {" + t + "}"
-		*queries = append(*queries, q)
+		res = append(res, "select * where {"+t+"}")
 	}
+	return res
 }
 
-func MakeLattice(initialQuery Query, queries *[]Query) {
+func MakeLattice(q string) []interface{} {
+
+	var initialQuery Query
+	initialQuery.query = q
 
 	// Get all the tripple patterns
 	tripplePatterns := GetQueryTripplePatterns(initialQuery)
@@ -141,353 +182,77 @@ func MakeLattice(initialQuery Query, queries *[]Query) {
 	for i := 0; i < triplePatternsNbr+1; i++ {
 		var temp []string = GenerateLevelTripplePatterns(tripplePatterns, level)
 		for _, t := range temp {
-			// q.parents = []string{}
-
 			allTripplePatterns = append(allTripplePatterns, t)
 		}
 		level--
 	}
 
-	MakeQueries(allTripplePatterns, queries)
+	res := MakeQueries(allTripplePatterns)
+
+	var ret []interface{}
+
+	for _, q := range res {
+		ret = append(ret, q)
+	}
+
+	return ret
 }
 
-func IsDirectParent(q1, q2 Query) bool {
-	tp1 := GetQueryTripplePatterns(q1)
-	tp2 := GetQueryTripplePatterns(q2)
-
-	if len(tp1) == len(tp2)+1 {
-		matches := 0
-
-		for _, q2 := range tp2 {
-			for _, q1 := range tp1 {
-				if q2 == q1 {
-					matches++
-					break
-				}
-			}
-		}
-		if matches == len(tp2) {
-			return true
-		} else {
-			return false
-		}
-	} else {
-		return false
-	}
-}
-
-func SetSuperQueries(queries *[]Query) {
-	qs := *queries
-
-	for i := 0; i < len(*queries); i++ {
-		if i == 0 {
-			// The first element has no parents - root
-			qs[i].parents = []string{}
-		} else if i == len(qs)-1 {
-			// The last element is the empty query
-			for _, qTemp := range GetQueryTripplePatterns(qs[0]) {
-				qs[i].parents = append(qs[i].parents, qTemp)
-			}
-		} else {
-			//  The rest of the elements : {1, 2, ..., len(queries)-2}
-			for j := 0; j < i; j++ {
-				res := IsDirectParent(qs[j], qs[i])
-				if res {
-					qs[i].parents = append(qs[i].parents, strings.Join(GetQueryTripplePatterns(qs[j])[:], " . "))
-
-				}
-			}
-		}
-	}
-}
-
-func ContainsKey(queries *map[*Query]bool, q Query) bool {
-
-	for k := range *queries {
-		qTemp := *k
-		if qTemp.query == q.query {
-			return true
-		}
-	}
-	return false
-}
-
-func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
-	// Make the HTTP request
-	data := url.Values{}
-	data.Set("query", sparqlQuery)
-
-	u, _ := url.ParseRequestURI(requestUrl)
-	urlStr := u.String()
-
-	client := &http.Client{}
-	r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
-	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	res, err := client.Do(r)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return 0
-	}
-
-	// Read the response body
-	dataBody, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var XMLResponseData Sparql
-	xml.Unmarshal([]byte(dataBody), &XMLResponseData)
-
-	return len(*&XMLResponseData.Results.Result)
-}
-
-func FindQuery(queries []Query, query Query) (int, bool) {
-	for i, q := range queries {
-		if q.query == query.query {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
-func RemoveQuery(listQueries []Query, index int) []Query {
-	var newListQueries []Query
-	for j, q := range listQueries {
-		if j != index {
-			newListQueries = append(newListQueries, q)
-		}
-	}
-
-	return newListQueries
-}
-
-// Copyright (C) 2020 Alessandro Segala (ItalyPaleAle)
-// License: MIT
-
-// MyGoFunc fetches an external resource by making a HTTP request from Go
-// The JavaScript method accepts one argument, which is the URL to request
-func executeSPARQLQuery() js.Func {
+func AllQueries() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		// Get the URL as argument
-		// args[0] is a js.Value, so we need to get a string out of it
-		requestUrl := args[0].String()
-		sparqlQuery := args[1].String()
-
-		// Handler for the Promise
-		// We need to return a Promise because HTTP requests are blocking in Go
-		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			resolve := args[0]
-			// reject := args[1]
-
-			// Run this code asynchronously
-			go func() {
-
-				dataBody := RelaxBuisness.ExecuteSPARQLQuery(requestUrl, sparqlQuery)
-
-				// "dataBody" is a byte slice, so we need to convert it to a JS Uint8Array object
-				arrayConstructor := js.Global().Get("Uint8Array")
-				dataJS := arrayConstructor.New(len(dataBody))
-				js.CopyBytesToJS(dataJS, dataBody)
-
-				// Create a Response object and pass the data
-				responseConstructor := js.Global().Get("Response")
-				response := responseConstructor.New(dataJS)
-
-				// Resolve the Promise
-				resolve.Invoke(response)
-			}()
-
-			// The handler of a Promise doesn't return any value
-			return nil
-		})
-
-		// Create and return the Promise object
-		promiseConstructor := js.Global().Get("Promise")
-		return promiseConstructor.New(handler)
+		q := args[0].String()
+		return MakeLattice(q)
 	})
 }
 
-func isFailing() js.Func {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-
-		requestUrl := args[0].String()
-		sparqlQuery := args[1].String()
-
-		return RelaxBuisness.IsFailing(requestUrl, sparqlQuery)
-	})
+func IntToByte(num int) byte {
+	size := int(unsafe.Sizeof(num))
+	arr := make([]byte, size)
+	for i := 0; i < size; i++ {
+		byt := *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&num)) + uintptr(i)))
+		arr[i] = byt
+	}
+	return arr[0]
 }
 
 func Base() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 
-		// initialQuery := args[0].String()
+		// Parameters of the base algorithm
+
+		// initial query : string
+		initialQuery := args[0].String()
+
+		// The constant K : integer
 		K := args[1].Int()
+		// convert it to byte
+		k := IntToByte(K)
+
+		// Convert JS array to Go slice in NBs
+		NBs := make([]byte, args[2].Get("length").Int())
+		_ = js.CopyBytesToGo(NBs, args[2])
 
 		// handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// 	resolve := args[0]
 
-		// 	go func() {
-		// 		nbrExecutedQueries := RelaxBuisness.Base(initialQuery, K)
+		// go func() {
+		// var res []interface{}
+		_, _, nb := RelaxBuisness.Base(initialQuery, k, NBs)
+		// res = append(res, xss)
+		// res = append(res, mfis)
+		// res = append(res, nbr)
 
-		// 		// Resolve the Promise
-		// 		resolve.Invoke(nbrExecutedQueries)
+		return nb
 
-		// 	}()
+		// Resolve the Promise
+		// resolve.Invoke(nbrExecutedQueries)
 
-		// 	return nil
+		// }()
+
+		// return nil
 		// })
 		// promiseConstructor := js.Global().Get("Promise")
 		// return promiseConstructor.New(handler)
-		// Initialisations
-		// ##################################################################################################################################################################### //
-		// ##########################################################           INITIALIZE ALGO         ######################################################################## //
-		// ##################################################################################################################################################################### //
-
-		var initialQuery Query
-		initialQuery.query = args[0].String()
-
-		// List Queries
-		var listQueries []Query
-
-		// Executed Queries : contains for each qury, the number of the results
-		var executedQueries map[*Query]int = make(map[*Query]int)
-
-		// List FIS : all rthe queries that fail
-		var listFIS map[*Query]bool = make(map[*Query]bool)
-
-		listXSS := &[]Query{}
-		listMFIS := &[]Query{}
-
-		// ##################################################################################################################################################################### //
-		// ##########################################################              RUN ALGO             ######################################################################## //
-		// ##################################################################################################################################################################### //
-
-		MakeLattice(initialQuery, &listQueries)
-
-		SetSuperQueries(&listQueries)
-		var s int = 0
-
-		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			resolve := args[0]
-			reject := args[1]
-
-			go func() {
-
-				for len(listQueries) != 0 {
-
-					// First element of the list
-					qTemp := listQueries[0]
-
-					// Remove the first element from the list
-					listQueries = listQueries[1:]
-
-					var Nb int
-
-					// go func() {
-					// Make HTTP request and save the results of the request in Nb
-					data := url.Values{}
-					data.Set("query", qTemp.query)
-
-					u, _ := url.ParseRequestURI("http://localhost:3030/base")
-					urlStr := u.String()
-
-					client := &http.Client{}
-					r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
-					r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-					res, err := client.Do(r)
-					if err != nil {
-						log.Fatalln(err)
-					}
-					defer res.Body.Close()
-
-					if res.StatusCode != 200 {
-						reject.Invoke(0)
-					}
-
-					// Read the response body
-					dataBody, err := ioutil.ReadAll(res.Body)
-					if err != nil {
-						log.Fatalln(err)
-					}
-
-					var XMLResponseData Sparql
-					xml.Unmarshal([]byte(dataBody), &XMLResponseData)
-
-					Nb = len(*&XMLResponseData.Results.Result)
-
-					// Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
-
-					// add qTemp to executedQueries list with the number Nb of the results
-					executedQueries[&qTemp] = Nb
-					// }()
-
-					// Get Direct Super Queries Of 'qTemp'
-					var superQueries []Query
-					MakeQueries(qTemp.parents, &superQueries)
-
-					for _, mfis := range superQueries {
-						fmt.Println(s, " - superqueries: ", mfis)
-						s++
-					}
-
-					fmt.Println("executedQueries: ")
-					for k, v := range executedQueries {
-						fmt.Println("query: ", (*k).query, " nbr: ", v)
-					}
-
-					parentsFIS := true
-
-					i := 0
-
-					for parentsFIS && i < len(superQueries) {
-						superQuery := superQueries[i]
-						if !ContainsKey(&listFIS, superQuery) {
-							parentsFIS = false
-						}
-						i++
-					}
-
-					if Nb > K {
-						// Query qTemp fails
-						if parentsFIS {
-							// We remove all the superqueries of qTemp from listMFIS list
-							for _, qSQ := range superQueries {
-								index, found := FindQuery(*listMFIS, qSQ)
-								if found {
-									*listMFIS = RemoveQuery(*listMFIS, index)
-								}
-							}
-
-							// Since the request qTemp has failed, we add it to the list of FIS
-							listFIS[&qTemp] = true
-
-							// qTemps is the new MFIS
-							*listMFIS = append(*listMFIS, qTemp)
-						}
-					} else {
-						// qTemp has succeded
-						if parentsFIS && qTemp.query != " " {
-							*listXSS = append(*listXSS, qTemp)
-						}
-					}
-				}
-
-				fmt.Println("list XSS: ", *listXSS)
-				fmt.Println("list MFIS: ", *listMFIS)
-
-				resolve.Invoke(len(executedQueries))
-			}()
-
-			return nil
-		})
-		promiseConstructor := js.Global().Get("Promise")
-		return promiseConstructor.New(handler)
 	})
 }
 
@@ -496,6 +261,7 @@ func main() {
 
 	js.Global().Set("executeSPARQLQuery", executeSPARQLQuery())
 	js.Global().Set("isFailing", isFailing())
+	js.Global().Set("AllQueries", AllQueries())
 	js.Global().Set("Base", Base())
 
 	<-c

@@ -46,8 +46,7 @@ let luisAlgorithmsChecked = false;
 const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
 
-	const nbr = await Base("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }", 3)
-	console.log("nbr: ", nbr);
+	await baseAlgorithm()
 
 	let results = [];
 	var isfailing = 0;
@@ -162,3 +161,23 @@ resultsInput.addEventListener('change', () => {
 			.setAttribute('style', 'display: none');
 	}
 });
+
+const baseAlgorithm = async () => {
+	// Generate all possible queries from initial query : lattice
+	const queries = AllQueries("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }")
+
+	const nbs = []
+
+	for (query of queries) {
+		const params = new URLSearchParams()
+		params.append("query", query)
+
+		const response = await axios.post("http://localhost:3030/base", params)
+		nbs.push(response.data.results.bindings.length)
+	}
+
+	const NBs = new Uint8Array(nbs)
+
+	const obj = await Base("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }", 3, NBs)
+	console.log("result ", obj);
+}
