@@ -1,7 +1,6 @@
 package RelaxBuisness
 
 import (
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,14 +14,14 @@ type Query struct {
 	parents []string
 }
 
-type Sparql struct {
-	Results *Results `xml:"results"`
-}
-type Results struct {
-	Result []Result `xml:"result"`
-}
+// type Sparql struct {
+// 	Results *Results `xml:"results"`
+// }
+// type Results struct {
+// 	Result []Result `xml:"result"`
+// }
 
-type Result struct{}
+// type Result struct{}
 
 // To be exported function must sytart with a capital letter
 func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
@@ -55,20 +54,6 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 	}
 
 	return dataBody
-}
-
-func IsFailing(requestUrl string, sparqlQuery string) int {
-
-	var dataBody []byte = []byte{}
-
-	go func() {
-		dataBody = ExecuteSPARQLQuery(requestUrl, sparqlQuery)
-	}()
-
-	if len(dataBody) == 0 {
-		return 1
-	}
-	return 0
 }
 
 func GetQueryTripplePatterns(initialQuery Query) []string {
@@ -261,40 +246,40 @@ func ContainsKey(queries *map[*Query]bool, q Query) bool {
 	return false
 }
 
-func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
-	// Make the HTTP request
-	// res, err := http.DefaultClient.Get(requestUrl)
-	data := url.Values{}
-	data.Set("query", sparqlQuery)
+// func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
+// 	// Make the HTTP request
+// 	// res, err := http.DefaultClient.Get(requestUrl)
+// 	data := url.Values{}
+// 	data.Set("query", sparqlQuery)
 
-	u, _ := url.ParseRequestURI(requestUrl)
-	urlStr := u.String()
+// 	u, _ := url.ParseRequestURI(requestUrl)
+// 	urlStr := u.String()
 
-	client := &http.Client{}
-	r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
-	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+// 	client := &http.Client{}
+// 	r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
+// 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := client.Do(r)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer res.Body.Close()
+// 	res, err := client.Do(r)
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
+// 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
-		return 0
-	}
+// 	if res.StatusCode != 200 {
+// 		return 0
+// 	}
 
-	// Read the response body
-	dataBody, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
+// 	// Read the response body
+// 	dataBody, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
 
-	var XMLResponseData Sparql
-	xml.Unmarshal([]byte(dataBody), &XMLResponseData)
+// 	var XMLResponseData Sparql
+// 	xml.Unmarshal([]byte(dataBody), &XMLResponseData)
 
-	return len(*&XMLResponseData.Results.Result)
-}
+// 	return len(*&XMLResponseData.Results.Result)
+// }
 
 func FindQuery(queries []Query, query Query) (int, bool) {
 	for i, q := range queries {
@@ -355,14 +340,10 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		// go func() {
-		// Make HTTP request and save the results of the request in Nb
-		// Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
 		Nb := NBs[s]
 		s++
 		// add qTemp to executedQueries list with the number Nb of the results
 		executedQueries[&qTemp] = Nb
-		// }()
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
@@ -419,9 +400,6 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 	for _, m := range *listMFIS {
 		mfis = append(mfis, m.query)
 	}
-
-	fmt.Println("xss: ", xss)
-	fmt.Println("mfis: ", mfis)
 
 	return xss, mfis, len(executedQueries)
 }
