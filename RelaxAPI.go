@@ -256,6 +256,42 @@ func Base() js.Func {
 	})
 }
 
+func TpExecuteSPARQLQuery() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// Get the URL as argument
+		// args[0] is a js.Value, so we need to get a string out of it
+		requestUrl := args[0].String()
+		sparqlQuery := args[1].String()
+
+		// Handler for the Promise
+		// We need to return a Promise because HTTP requests are blocking in Go
+		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			resolve := args[0]
+			// reject := args[1]
+
+			// Run this code asynchronously
+			go func() {
+
+				nb := RelaxBuisness.TpExecuteSPARQLQuery(requestUrl, sparqlQuery)
+
+				// Create a Response object and pass the data
+				responseConstructor := js.Global().Get("Response")
+				response := responseConstructor.New(nb)
+
+				// Resolve the Promise
+				resolve.Invoke(response)
+			}()
+
+			// The handler of a Promise doesn't return any value
+			return nil
+		})
+
+		// Create and return the Promise object
+		promiseConstructor := js.Global().Get("Promise")
+		return promiseConstructor.New(handler)
+	})
+}
+
 func main() {
 	c := make(chan int)
 
@@ -263,6 +299,7 @@ func main() {
 	js.Global().Set("isFailing", isFailing())
 	js.Global().Set("AllQueries", AllQueries())
 	js.Global().Set("Base", Base())
+	js.Global().Set("TpExecuteSPARQLQuery", TpExecuteSPARQLQuery())
 
 	<-c
 }
