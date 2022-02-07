@@ -1,7 +1,7 @@
 package RelaxBuisness
 
 import (
-	"encoding/xml"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,15 +14,6 @@ type Query struct {
 	query   string
 	parents []string
 }
-
-type Sparql struct {
-	Results *Results `xml:"results"`
-}
-type Results struct {
-	Result []Result `xml:"result"`
-}
-
-type Result struct{}
 
 // To be exported function must sytart with a capital letter
 func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
@@ -55,20 +46,6 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 	}
 
 	return dataBody
-}
-
-func IsFailing(requestUrl string, sparqlQuery string) int {
-
-	var dataBody []byte = []byte{}
-
-	go func() {
-		dataBody = ExecuteSPARQLQuery(requestUrl, sparqlQuery)
-	}()
-
-	if len(dataBody) == 0 {
-		return 1
-	}
-	return 0
 }
 
 func GetQueryTripplePatterns(initialQuery Query) []string {
@@ -261,6 +238,26 @@ func ContainsKey(queries *map[*Query]bool, q Query) bool {
 	return false
 }
 
+type Sparql struct {
+	Results Results `json:"results"`
+}
+
+type Results struct {
+	Bindings []Bindings `json:"bindings"`
+}
+
+type Bindings struct {
+	Fp TP `json:fp`
+	A  TP `json:a`
+	N  TP `json:n`
+	C  TP `json:c`
+}
+
+type TP struct {
+	Type  string `json:type`
+	Value string `json:value`
+}
+
 func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 	// Make the HTTP request
 	// res, err := http.DefaultClient.Get(requestUrl)
@@ -281,7 +278,7 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return 0
+		return -1
 	}
 
 	// Read the response body
@@ -290,10 +287,14 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 		log.Fatalln(err)
 	}
 
-	var XMLResponseData Sparql
-	xml.Unmarshal([]byte(dataBody), &XMLResponseData)
+	var results Sparql
+	err = json.Unmarshal([]byte(dataBody), &results)
 
-	return len(*&XMLResponseData.Results.Result)
+	if err != nil {
+		return -1
+	}
+
+	return len(results.Results.Bindings)
 }
 
 func FindQuery(queries []Query, query Query) (int, bool) {
@@ -355,14 +356,10 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		// go func() {
-		// Make HTTP request and save the results of the request in Nb
-		// Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
 		Nb := NBs[s]
 		s++
 		// add qTemp to executedQueries list with the number Nb of the results
 		executedQueries[&qTemp] = Nb
-		// }()
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
@@ -419,9 +416,6 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 	for _, m := range *listMFIS {
 		mfis = append(mfis, m.query)
 	}
-
-	fmt.Println("xss: ", xss)
-	fmt.Println("mfis: ", mfis)
 
 	return xss, mfis, len(executedQueries)
 }

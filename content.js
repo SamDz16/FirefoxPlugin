@@ -46,7 +46,7 @@ let luisAlgorithmsChecked = false;
 const isFailingAlgorithm = async (e) => {
 	e.preventDefault();
 
-	await baseAlgorithm()
+	await baseAlgorithm();
 
 	let results = [];
 	var isfailing = 0;
@@ -55,11 +55,10 @@ const isFailingAlgorithm = async (e) => {
 	let endpoint = 'https://dbpedia.org/sparql';
 
 	// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
-	let query = document.querySelector('#query').value
+	let query = document.querySelector('#query').value;
 	try {
-
 		// CALLING THE ISFAILING ALGORITHM
-		isfailing = await isFailing(endpoint, query)
+		isfailing = await isFailing(endpoint, query);
 
 		// CALLING THE EXECUTEQPARQLALGORITHM
 		const response = await executeSPARQLQuery(endpoint, query);
@@ -67,24 +66,28 @@ const isFailingAlgorithm = async (e) => {
 		// FROM SPARQL RESULTS TO XML
 		const getXMLData = async (response) => {
 			const str = await response.text();
-			const data = await new window.DOMParser().parseFromString(str, 'text/xml');
+			const data = await new window.DOMParser().parseFromString(
+				str,
+				'text/xml'
+			);
 			const results = data.getElementsByTagName('uri');
-			isfailing = results.length === 0 ? 1 : 0
-			return results
-		}
+			return results;
+		};
 
 		// Response is in XML format
-		results = await getXMLData(response)
-		
+		results = await getXMLData(response);
+
 		// TEST VALE OF ISFAILING
 		if (isfailing === 1) {
-
 			// There is no results
-			document.querySelector('#options').innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector(
+				'#options'
+			).innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
 		} else {
-
 			// There is at least one result
-			document.querySelector('#options').innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
+			document.querySelector(
+				'#options'
+			).innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
 
 			// Create a div element to contain label and input
 			const resultsDiv = document.createElement('div');
@@ -99,7 +102,7 @@ const isFailingAlgorithm = async (e) => {
 			resultsInput.setAttribute('type', 'checkbox');
 			resultsInput.setAttribute('id', 'resultsLabel');
 			resultsInput.setAttribute('name', 'resultsLabel');
-			
+
 			// Apprnd the two elements to the div element
 			resultsDiv.append(resultsInput, resultsLabel);
 
@@ -140,7 +143,6 @@ const isFailingAlgorithm = async (e) => {
 // Add event listener to track whether the user would like to use the Luis algorithms or not
 // and modify a global variable
 isFailingInput.addEventListener('change', () => {
-
 	if (isFailingInput.checked) {
 		sparqlForm.addEventListener('submit', isFailingAlgorithm);
 	} else {
@@ -164,41 +166,65 @@ resultsInput.addEventListener('change', () => {
 
 // const baseAlgorithm = async () => {
 // 	// Generate all possible queries from initial query : lattice
-// 	const queries = AllQueries("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }")
+// 	const queries = AllQueries(
+// 		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }'
+// 	);
 
-// 	const nbs = []
+// 	const nbs = [];
 
 // 	for (query of queries) {
-// 		const params = new URLSearchParams()
-// 		params.append("query", query)
+// 		const params = new URLSearchParams();
+// 		params.append('query', query);
 
-// 		const response = await axios.post("http://localhost:3030/base", params)
-// 		nbs.push(response.data.results.bindings.length)
+// 		const response = await axios.post('http://localhost:3030/base', params);
+// 		nbs.push(response.data.results.bindings.length);
 // 	}
 
-// 	const NBs = new Uint8Array(nbs)
+// 	const NBs = new Uint8Array(nbs);
 
-// 	const obj = await Base("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }", 3, NBs)
-// 	console.log("result ", obj);
-// }
+// 	const resGlobal = await Base(
+// 		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }',
+// 		3,
+// 		NBs
+// 	);
+// 	console.log('LIST OF XSSs : ');
+// 	console.log(resGlobal[0]);
 
+// 	console.log('LIST OF MFISs : ');
+// 	console.log(resGlobal[1]);
+
+// 	console.log('NUMBER OF EXECUTED QUERIES: ');
+// 	console.log(resGlobal[2]);
+// };
+
+// Another implementation
+// In this implementation, the HTTP request are made in the golang side not in js side
 const baseAlgorithm = async () => {
 	// Generate all possible queries from initial query : lattice
-	const queries = AllQueries("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }")
+	const queries = AllQueries(
+		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }'
+	);
 
-	const nbs = []
+	const nbs = [];
 
 	for (query of queries) {
-		// const params = new URLSearchParams()
-		// params.append("query", query)
-
-		// const response = await axios.post("http://localhost:3030/base", params)
-		const nb = await 
-		nbs.push(response.data.results.bindings.length)
+		const nb = await TpExecuteSPARQLQuery("http://localhost:3030/base", query)
+		nbs.push(nb)
 	}
 
-	const NBs = new Uint8Array(nbs)
+	const NBs = new Uint8Array(nbs);
 
-	const obj = await Base("SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }", 3, NBs)
-	console.log("result ", obj);
-}
+	const resGlobal = await Base(
+		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }',
+		3,
+		NBs
+	);
+	console.log('LIST OF XSSs : ');
+	console.log(resGlobal[0]);
+
+	console.log('LIST OF MFISs : ');
+	console.log(resGlobal[1]);
+
+	console.log('NUMBER OF EXECUTED QUERIES: ');
+	console.log(resGlobal[2]);
+};
