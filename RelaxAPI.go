@@ -281,6 +281,51 @@ func Base() js.Func {
 	})
 }
 
+// func BaseV2() js.Func {
+// 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+
+// 		// Parameters of the base algorithm
+
+// 		//1.  initial query : string
+// 		initialQuery := args[0].String()
+
+// 		//2.  The constant K : integer
+// 		K := args[1].Int()
+// 		// convert it to byte
+// 		k := IntToByte(K)
+
+// 		//3. NBS: convert JS array to Go slice in NBs
+// 		// NBs := make([]byte, args[2].Get("length").Int())
+// 		// _ = js.CopyBytesToGo(NBs, args[2])
+
+// 		// Call the Base Algorithm
+// 		xss, mfis, nbr := RelaxBuisness.BaseV2(initialQuery, k)
+
+// 		// List of xss
+// 		var resXSS []interface{}
+// 		for _, q := range xss {
+// 			resXSS = append(resXSS, q)
+// 		}
+
+// 		// List of MFIS
+// 		var resMFIS []interface{}
+// 		for _, q := range mfis {
+// 			resMFIS = append(resMFIS, q)
+// 		}
+
+// 		// Number of results
+// 		var resGlobal []interface{}
+
+// 		// Encapsulate everything into an object
+// 		resGlobal = append(resGlobal, resXSS)
+// 		resGlobal = append(resGlobal, resMFIS)
+// 		resGlobal = append(resGlobal, nbr)
+
+// 		// Return value of the Base Algorithm
+// 		return resGlobal
+// 	})
+// }
+
 func TpExecuteSPARQLQuery() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// Get the URL as argument
@@ -319,6 +364,7 @@ func main() {
 	js.Global().Set("isFailing", isFailing())
 	js.Global().Set("AllQueries", AllQueries())
 	js.Global().Set("Base", Base())
+	// js.Global().Set("BaseV2", BaseV2())
 	js.Global().Set("TpExecuteSPARQLQuery", TpExecuteSPARQLQuery())
 
 	<-c

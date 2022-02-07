@@ -419,3 +419,106 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 
 	return xss, mfis, len(executedQueries)
 }
+
+// func BaseV2(q string, K byte) ([]string, []string, int) {
+// 	// Initialisations
+// 	// ##################################################################################################################################################################### //
+// 	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
+// 	// ##################################################################################################################################################################### //
+
+// 	var initialQuery Query
+// 	initialQuery.query = q
+
+// 	// List Queries
+// 	var listQueries []Query
+
+// 	// Executed Queries : contains for each qury, the number of the results
+// 	var executedQueries map[*Query]byte = make(map[*Query]byte)
+
+// 	// List FIS : all rthe queries that fail
+// 	var listFIS map[*Query]bool = make(map[*Query]bool)
+
+// 	listXSS := &[]Query{}
+// 	listMFIS := &[]Query{}
+
+// 	// ##################################################################################################################################################################### //
+// 	// ##########################################################              RUN ALGO             ######################################################################## //
+// 	// ##################################################################################################################################################################### //
+
+// 	MakeLattice(initialQuery, &listQueries)
+
+// 	SetSuperQueries(&listQueries)
+// 	var s int = 0
+// 	var count int = 0
+
+// 	for len(listQueries) != 0 {
+
+// 		// First element of the list
+// 		qTemp := listQueries[0]
+
+// 		// Remove the first element from the list
+// 		listQueries = listQueries[1:]
+
+// 		Nb := byte(TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query))
+// 		s++
+// 		// add qTemp to executedQueries list with the number Nb of the results
+// 		executedQueries[&qTemp] = Nb
+
+// 		// Get Direct Super Queries Of 'qTemp'
+// 		var superQueries []Query
+// 		MakeQueries(qTemp.parents, &superQueries)
+
+// 		for _, mfis := range superQueries {
+// 			fmt.Println(count, " - superqueries: ", mfis)
+// 			count++
+// 		}
+
+// 		parentsFIS := true
+
+// 		i := 0
+
+// 		for parentsFIS && i < len(superQueries) {
+// 			superQuery := superQueries[i]
+// 			if !ContainsKey(&listFIS, superQuery) {
+// 				parentsFIS = false
+// 			}
+// 			i++
+// 		}
+
+// 		if Nb > K {
+// 			// Query qTemp fails
+// 			if parentsFIS {
+// 				// We remove all the superqueries of qTemp from listMFIS list
+// 				for _, qSQ := range superQueries {
+// 					index, found := FindQuery(*listMFIS, qSQ)
+// 					if found {
+// 						*listMFIS = RemoveQuery(*listMFIS, index)
+// 					}
+// 				}
+
+// 				// Since the request qTemp has failed, we add it to the list of FIS
+// 				listFIS[&qTemp] = true
+
+// 				// qTemps is the new MFIS
+// 				*listMFIS = append(*listMFIS, qTemp)
+// 			}
+// 		} else {
+// 			// qTemp has succeded
+// 			if parentsFIS && qTemp.query != " " {
+// 				*listXSS = append(*listXSS, qTemp)
+// 			}
+// 		}
+// 	}
+
+// 	var xss []string
+// 	for _, x := range *listXSS {
+// 		xss = append(xss, x.query)
+// 	}
+
+// 	var mfis []string
+// 	for _, m := range *listMFIS {
+// 		mfis = append(mfis, m.query)
+// 	}
+
+// 	return xss, mfis, len(executedQueries)
+// }

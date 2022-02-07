@@ -164,6 +164,9 @@ resultsInput.addEventListener('change', () => {
 	}
 });
 
+// 1st implementation
+// JS is the one who makes all the HTTP requests
+
 // const baseAlgorithm = async () => {
 // 	// Generate all possible queries from initial query : lattice
 // 	const queries = AllQueries(
@@ -197,6 +200,7 @@ resultsInput.addEventListener('change', () => {
 // 	console.log(resGlobal[2]);
 // };
 
+
 // Another implementation
 // In this implementation, the HTTP request are made in the golang side not in js side
 const baseAlgorithm = async () => {
@@ -228,3 +232,4 @@ const baseAlgorithm = async () => {
 	console.log('NUMBER OF EXECUTED QUERIES: ');
 	console.log(resGlobal[2]);
 };
+
