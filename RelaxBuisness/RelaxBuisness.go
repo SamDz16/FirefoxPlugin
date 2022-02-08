@@ -474,7 +474,6 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 
 	SetSuperQueries(&listQueries)
 	var s int = 0
-	var count int = 0
 
 	for len(listQueries) != 0 {
 
@@ -484,19 +483,23 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		Nb := NBs[s]
-		s++
-		// add qTemp to executedQueries list with the number Nb of the results
-		executedQueries[&qTemp] = Nb
+		var Nb byte
+		fmt.Println(qTemp.query)
+
+		if qTemp.query != "select * where { }" {
+			Nb = NBs[s]
+			s++
+
+			// add qTemp to executedQueries list with the number Nb of the results
+			executedQueries[&qTemp] = Nb
+		} else {
+			fmt.Println("empty query")
+			Nb = 1
+		}
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
 		MakeQueries(qTemp.parents, &superQueries)
-
-		for _, mfis := range superQueries {
-			fmt.Println(count, " - superqueries: ", mfis)
-			count++
-		}
 
 		parentsFIS := true
 
@@ -533,6 +536,7 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 				*listXSS = append(*listXSS, qTemp)
 			}
 		}
+
 	}
 
 	var xss []string
