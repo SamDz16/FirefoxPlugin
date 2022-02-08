@@ -202,12 +202,13 @@ resultsInput.addEventListener('change', () => {
 
 
 // Another implementation
-// In this implementation, the HTTP request are made in the golang side not in js side
+// In this implementation, the HTTP requests are made in the golang side not in JS side
 const baseAlgorithm = async () => {
+
+	const initialQuery = "SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }"
+
 	// Generate all possible queries from initial query : lattice
-	const queries = AllQueries(
-		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }'
-	);
+	const queries = AllQueries(initialQuery);
 
 	const nbs = [];
 
@@ -218,11 +219,7 @@ const baseAlgorithm = async () => {
 
 	const NBs = new Uint8Array(nbs);
 
-	const resGlobal = await Base(
-		'SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }',
-		3,
-		NBs
-	);
+	const resGlobal = await Base(initialQuery, 3, NBs);
 	console.log('LIST OF XSSs : ');
 	console.log(resGlobal[0]);
 

@@ -9,7 +9,6 @@
 			"js": [
 				"libs/vuejs_lib.js",
 				"libs/wasm_exec.js",
-				"libs/axios_lib.js",
 				"content.js"
 			]
 		}
