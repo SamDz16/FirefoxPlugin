@@ -2,149 +2,18 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"unsafe"
 )
 
 type Query struct {
 	query   string
 	parents []string
 }
-
-// START : SPECIAL METHODS
-// ###########################################################################################################################################################################
-
-func TpGenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
-	combinations := []string{}
-	n := len(triplePatterns)
-
-	indexes := []int{}
-	for i := 0; i < level; i++ {
-		indexes = append(indexes, i)
-	}
-
-	//  liste_combinaisons.append(tuple([e[index] for index in indices]))
-	triple := ""
-	for i, index := range indexes {
-		if i == len(indexes)-1 {
-			triple += triplePatterns[index]
-		} else {
-			triple += triplePatterns[index] + " . "
-		}
-	}
-	combinations = append(combinations, triple)
-
-	if level == 0 {
-		return []string{" "}
-	}
-
-	if level == n {
-		return combinations
-	}
-
-	i := level - 1
-
-	for i != -1 {
-		indexes[i] += 1
-
-		for j := i + 1; j < level; j++ {
-			indexes[j] = indexes[j-1] + 1
-		}
-
-		if indexes[i] == (n - level + i) {
-			i -= 1
-		} else {
-			i = level - 1
-		}
-
-		temp := []string{}
-		for _, index := range indexes {
-			temp = append(temp, triplePatterns[index])
-		}
-
-		// fmt.Println("temp", temp)
-
-		triple := ""
-		for i, t := range temp {
-			if i == len(temp)-1 {
-				triple += t
-			} else {
-				triple += t + " . "
-			}
-		}
-
-		combinations = append(combinations, triple)
-	}
-	return combinations
-}
-
-func TpMakeQueries(tripplePatterns []string) []string {
-	var res []string
-
-	for _, t := range tripplePatterns {
-		res = append(res, "select * where {"+t+"}")
-	}
-	return res
-}
-
-func TpMakeLattice(q string) []interface{} {
-
-	var initialQuery Query
-	initialQuery.query = q
-
-	// Get all the tripple patterns
-	tripplePatterns := GetQueryTripplePatterns(initialQuery)
-
-	// triplePatternsNbr will contain the length of all the individual triple patterns of the initialQuery
-	triplePatternsNbr := len(tripplePatterns)
-
-	level := triplePatternsNbr
-	var allTripplePatterns []string
-
-	for i := 0; i < triplePatternsNbr+1; i++ {
-		var temp []string = GenerateLevelTripplePatterns(tripplePatterns, level)
-		for _, t := range temp {
-			allTripplePatterns = append(allTripplePatterns, t)
-		}
-		level--
-	}
-
-	res := TpMakeQueries(allTripplePatterns)
-
-	var ret []interface{}
-
-	for _, q := range res {
-		ret = append(ret, q)
-	}
-
-	return ret
-}
-
-// END : SPECIAL METHODS
-// ###########################################################################################################################################################################
-
-// START : UTILITY FUNCTIONS
-// ###########################################################################################################################################################################
-
-func IntToByte(num int) byte {
-	size := int(unsafe.Sizeof(num))
-	arr := make([]byte, size)
-	for i := 0; i < size; i++ {
-		byt := *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&num)) + uintptr(i)))
-		arr[i] = byt
-	}
-	return arr[0]
-}
-
-// END : UTILITY FUNCTIONS
-// ###########################################################################################################################################################################
-
-// START : BASE ALGORITHM FUNCTIONS
-// ###########################################################################################################################################################################
 
 func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 	// Make the HTTP request
@@ -179,6 +48,8 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 }
 
 func GetQueryTripplePatterns(initialQuery Query) []string {
+	fmt.Println("Executing GetQueryTripplePatterns() function ...")
+
 	triplePatternsStr := ""
 	start := false
 	for _, ch := range initialQuery.query {
@@ -204,6 +75,8 @@ func GetQueryTripplePatterns(initialQuery Query) []string {
 }
 
 func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
+	fmt.Println("Executing GenerateLevelTripplePatterns() function ...")
+
 	combinations := []string{}
 	n := len(triplePatterns)
 
@@ -268,6 +141,8 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 }
 
 func MakeQueries(tripplePatterns []string, queries *[]Query) {
+	fmt.Println("Executing MakeQueries() function ...")
+
 	for _, t := range tripplePatterns {
 		var q Query
 		q.query = "select * where {" + t + "}"
@@ -276,6 +151,7 @@ func MakeQueries(tripplePatterns []string, queries *[]Query) {
 }
 
 func MakeLattice(initialQuery Query, queries *[]Query) {
+	fmt.Println("Executing MakeLattice() function ...")
 
 	// Get all the tripple patterns
 	tripplePatterns := GetQueryTripplePatterns(initialQuery)
@@ -325,6 +201,8 @@ func IsDirectParent(q1, q2 Query) bool {
 }
 
 func SetSuperQueries(queries *[]Query) {
+	fmt.Println("Executing Base() function ...")
+
 	qs := *queries
 
 	for i := 0; i < len(*queries); i++ {
@@ -340,14 +218,8 @@ func SetSuperQueries(queries *[]Query) {
 			//  The rest of the elements : {1, 2, ..., len(queries)-2}
 			for j := 0; j < i; j++ {
 				res := IsDirectParent(qs[j], qs[i])
-				// fmt.Printf("j = %v - %v - %v - %v\n", j, queries[j], q, res)
 				if res {
-					// fmt.Println("parents", parents)
 					qs[i].parents = append(qs[i].parents, strings.Join(GetQueryTripplePatterns(qs[j])[:], " . "))
-
-					// fmt.Println(true)
-					// q.parents = append(q.parents, "true")
-					// q.parents = GetQueryTripplePatterns(qs[j])
 				}
 			}
 		}
@@ -355,6 +227,7 @@ func SetSuperQueries(queries *[]Query) {
 }
 
 func ContainsKey(queries *map[*Query]bool, q Query) bool {
+	fmt.Println("Executing ContainsKey() function ...")
 
 	for k := range *queries {
 		qTemp := *k
@@ -366,6 +239,8 @@ func ContainsKey(queries *map[*Query]bool, q Query) bool {
 }
 
 func FindQuery(queries []Query, query Query) (int, bool) {
+	fmt.Println("Executing FindQuery() function ...")
+
 	for i, q := range queries {
 		if q.query == query.query {
 			return i, true
@@ -375,6 +250,8 @@ func FindQuery(queries []Query, query Query) (int, bool) {
 }
 
 func RemoveQuery(listQueries []Query, index int) []Query {
+	fmt.Println("Executing RemoveQuery() function ...")
+
 	var newListQueries []Query
 	for j, q := range listQueries {
 		if j != index {
@@ -406,6 +283,7 @@ type TP struct {
 }
 
 func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
+	fmt.Println("Executing TpExecuteSPARQLQuery() function ...")
 
 	// defer wg.Done()
 
@@ -446,6 +324,7 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 }
 
 func Base(q string, K int) ([]string, []string, int) {
+	fmt.Println("Executing Base() function ...")
 	// Initialisations
 	// ##################################################################################################################################################################### //
 	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
