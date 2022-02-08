@@ -2,7 +2,6 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -407,8 +406,9 @@ type TP struct {
 }
 
 func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
-	// Make the HTTP request
-	// res, err := http.DefaultClient.Get(requestUrl)
+
+	// defer wg.Done()
+
 	data := url.Values{}
 	data.Set("query", sparqlQuery)
 
@@ -445,12 +445,11 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 	return len(results.Results.Bindings)
 }
 
-func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
+func Base(q string, K int) ([]string, []string, int) {
 	// Initialisations
 	// ##################################################################################################################################################################### //
 	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
 	// ##################################################################################################################################################################### //
-
 	var initialQuery Query
 	initialQuery.query = q
 
@@ -458,7 +457,7 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 	var listQueries []Query
 
 	// Executed Queries : contains for each qury, the number of the results
-	var executedQueries map[*Query]byte = make(map[*Query]byte)
+	var executedQueries map[*Query]int = make(map[*Query]int)
 
 	// List FIS : all rthe queries that fail
 	var listFIS map[*Query]bool = make(map[*Query]bool)
@@ -473,7 +472,10 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 	MakeLattice(initialQuery, &listQueries)
 
 	SetSuperQueries(&listQueries)
-	var s int = 0
+	// var s int = 0
+
+	// The wait listener
+	// var wg sync.WaitGroup
 
 	for len(listQueries) != 0 {
 
@@ -483,17 +485,14 @@ func Base(q string, K byte, NBs []byte) ([]string, []string, int) {
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		var Nb byte
-		fmt.Println(qTemp.query)
+		var Nb int
 
 		if qTemp.query != "select * where { }" {
-			Nb = NBs[s]
-			s++
+			Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
 
 			// add qTemp to executedQueries list with the number Nb of the results
 			executedQueries[&qTemp] = Nb
 		} else {
-			fmt.Println("empty query")
 			Nb = 1
 		}
 

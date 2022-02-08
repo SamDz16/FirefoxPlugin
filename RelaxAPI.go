@@ -44,37 +44,6 @@ func executeSPARQLQuery() js.Func {
 	})
 }
 
-func TpExecuteSPARQLQuery() js.Func {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		// Get the URL as argument
-		// args[0] is a js.Value, so we need to get a string out of it
-		requestUrl := args[0].String()
-		sparqlQuery := args[1].String()
-
-		// Handler for the Promise
-		// We need to return a Promise because HTTP requests are blocking in Go
-		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			resolve := args[0]
-			// reject := args[1]
-
-			// Run this code asynchronously
-			go func() {
-				nb := RelaxBuisness.TpExecuteSPARQLQuery(requestUrl, sparqlQuery)
-
-				// Resolve the Promise
-				resolve.Invoke(nb)
-			}()
-
-			// The handler of a Promise doesn't return any value
-			return nil
-		})
-
-		// Create and return the Promise object
-		promiseConstructor := js.Global().Get("Promise")
-		return promiseConstructor.New(handler)
-	})
-}
-
 func isFailing() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 
@@ -109,13 +78,6 @@ func isFailing() js.Func {
 	})
 }
 
-func AllQueries() js.Func {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		q := args[0].String()
-		return RelaxBuisness.TpMakeLattice(q)
-	})
-}
-
 func Base() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// Parameters of the base algorithm
@@ -124,38 +86,42 @@ func Base() js.Func {
 
 		//2.  The constant K : integer
 		K := args[1].Int()
-		// convert it to byte
-		k := RelaxBuisness.IntToByte(K)
 
-		//3. NBS: convert JS array to Go slice in NBs
-		NBs := make([]byte, args[2].Get("length").Int())
-		_ = js.CopyBytesToGo(NBs, args[2])
+		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			resolve := args[0]
 
-		// Call the Base Algorithm
-		xss, mfis, nbr := RelaxBuisness.Base(initialQuery, k, NBs)
+			go func() {
+				xss, mfis, nbr := RelaxBuisness.Base(initialQuery, K)
 
-		// List of xss
-		var resXSS []interface{}
-		for _, q := range xss {
-			resXSS = append(resXSS, q)
-		}
+				var resXSS []interface{}
+				for _, q := range xss {
+					resXSS = append(resXSS, q)
+				}
 
-		// List of MFIS
-		var resMFIS []interface{}
-		for _, q := range mfis {
-			resMFIS = append(resMFIS, q)
-		}
+				// List of MFIS
+				var resMFIS []interface{}
+				for _, q := range mfis {
+					resMFIS = append(resMFIS, q)
+				}
 
-		// Number of results
-		var resGlobal []interface{}
+				// Number of results
+				var resGlobal []interface{}
 
-		// Encapsulate everything into an object
-		resGlobal = append(resGlobal, resXSS)
-		resGlobal = append(resGlobal, resMFIS)
-		resGlobal = append(resGlobal, nbr)
+				// Encapsulate everything into an object
+				resGlobal = append(resGlobal, resXSS)
+				resGlobal = append(resGlobal, resMFIS)
+				resGlobal = append(resGlobal, nbr)
 
-		// Return value of the Base Algorithm
-		return resGlobal
+				// Return value of the Base Algorithm
+				// return resGlobal
+				resolve.Invoke(resGlobal)
+			}()
+			// The handler of a Promise doesn't return any value
+			return nil
+		})
+		// Create and return the Promise object
+		promiseConstructor := js.Global().Get("Promise")
+		return promiseConstructor.New(handler)
 	})
 }
 
@@ -163,9 +129,7 @@ func main() {
 	c := make(chan int)
 
 	js.Global().Set("executeSPARQLQuery", executeSPARQLQuery())
-	js.Global().Set("TpExecuteSPARQLQuery", TpExecuteSPARQLQuery())
 	js.Global().Set("isFailing", isFailing())
-	js.Global().Set("AllQueries", AllQueries())
 	js.Global().Set("Base", Base())
 
 	<-c

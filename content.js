@@ -164,24 +164,12 @@ resultsInput.addEventListener('change', () => {
 	}
 });
 
-// In this implementation, the HTTP requests are made in the golang side not in JS side
+// Full GO
 const baseAlgorithm = async () => {
 
 	const initialQuery = "SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }"
 
-	// Generate all possible queries from initial query : lattice
-	const queries = AllQueries(initialQuery);
-
-	const nbs = [];
-
-	for (query of queries) {
-		const nb = await TpExecuteSPARQLQuery("http://localhost:3030/base", query)
-		nbs.push(nb)
-	}
-
-	const NBs = new Uint8Array(nbs);
-
-	const resGlobal = await Base(initialQuery, 3, NBs);
+	const resGlobal = await Base(initialQuery, 3);
 	console.log('LIST OF XSSs : ');
 	console.log(resGlobal[0]);
 
