@@ -2,7 +2,6 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,9 +9,30 @@ import (
 	"strings"
 )
 
+// Struct fields must be capitalized, if not they cannot be exported
 type Query struct {
-	query   string
-	parents []string
+	Query   string
+	Parents []string
+}
+
+type Sparql struct {
+	Results Results `json:"results"`
+}
+
+type Results struct {
+	Bindings []Bindings `json:"bindings"`
+}
+
+type Bindings struct {
+	Fp TP `json:"fp"`
+	A  TP `json:"a"`
+	N  TP `json:"n"`
+	C  TP `json:"c"`
+}
+
+type TP struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
@@ -48,11 +68,11 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 }
 
 func GetQueryTripplePatterns(initialQuery Query) []string {
-	fmt.Println("Executing GetQueryTripplePatterns() function ...")
+	// fmt.Println("Executing GetQueryTripplePatterns() function ...")
 
 	triplePatternsStr := ""
 	start := false
-	for _, ch := range initialQuery.query {
+	for _, ch := range initialQuery.Query {
 
 		char := string(ch)
 
@@ -75,7 +95,7 @@ func GetQueryTripplePatterns(initialQuery Query) []string {
 }
 
 func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
-	fmt.Println("Executing GenerateLevelTripplePatterns() function ...")
+	// fmt.Println("Executing GenerateLevelTripplePatterns() function ...")
 
 	combinations := []string{}
 	n := len(triplePatterns)
@@ -141,17 +161,17 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 }
 
 func MakeQueries(tripplePatterns []string, queries *[]Query) {
-	fmt.Println("Executing MakeQueries() function ...")
+	// fmt.Println("Executing MakeQueries() function ...")
 
 	for _, t := range tripplePatterns {
 		var q Query
-		q.query = "select * where {" + t + "}"
+		q.Query = "select * where {" + t + "}"
 		*queries = append(*queries, q)
 	}
 }
 
 func MakeLattice(initialQuery Query, queries *[]Query) {
-	fmt.Println("Executing MakeLattice() function ...")
+	// fmt.Println("Executing MakeLattice() function ...")
 
 	// Get all the tripple patterns
 	tripplePatterns := GetQueryTripplePatterns(initialQuery)
@@ -201,25 +221,25 @@ func IsDirectParent(q1, q2 Query) bool {
 }
 
 func SetSuperQueries(queries *[]Query) {
-	fmt.Println("Executing Base() function ...")
+	// fmt.Println("Executing Base() function ...")
 
 	qs := *queries
 
 	for i := 0; i < len(*queries); i++ {
 		if i == 0 {
 			// The first element has no parents - root
-			qs[i].parents = []string{}
+			qs[i].Parents = []string{}
 		} else if i == len(qs)-1 {
 			// The last element is the empty query
 			for _, qTemp := range GetQueryTripplePatterns(qs[0]) {
-				qs[i].parents = append(qs[i].parents, qTemp)
+				qs[i].Parents = append(qs[i].Parents, qTemp)
 			}
 		} else {
 			//  The rest of the elements : {1, 2, ..., len(queries)-2}
 			for j := 0; j < i; j++ {
 				res := IsDirectParent(qs[j], qs[i])
 				if res {
-					qs[i].parents = append(qs[i].parents, strings.Join(GetQueryTripplePatterns(qs[j])[:], " . "))
+					qs[i].Parents = append(qs[i].Parents, strings.Join(GetQueryTripplePatterns(qs[j])[:], " . "))
 				}
 			}
 		}
@@ -227,11 +247,11 @@ func SetSuperQueries(queries *[]Query) {
 }
 
 func ContainsKey(queries *map[*Query]bool, q Query) bool {
-	fmt.Println("Executing ContainsKey() function ...")
+	// fmt.Println("Executing ContainsKey() function ...")
 
 	for k := range *queries {
 		qTemp := *k
-		if qTemp.query == q.query {
+		if qTemp.Query == q.Query {
 			return true
 		}
 	}
@@ -239,10 +259,10 @@ func ContainsKey(queries *map[*Query]bool, q Query) bool {
 }
 
 func FindQuery(queries []Query, query Query) (int, bool) {
-	fmt.Println("Executing FindQuery() function ...")
+	// fmt.Println("Executing FindQuery() function ...")
 
 	for i, q := range queries {
-		if q.query == query.query {
+		if q.Query == query.Query {
 			return i, true
 		}
 	}
@@ -250,7 +270,7 @@ func FindQuery(queries []Query, query Query) (int, bool) {
 }
 
 func RemoveQuery(listQueries []Query, index int) []Query {
-	fmt.Println("Executing RemoveQuery() function ...")
+	// fmt.Println("Executing RemoveQuery() function ...")
 
 	var newListQueries []Query
 	for j, q := range listQueries {
@@ -262,28 +282,8 @@ func RemoveQuery(listQueries []Query, index int) []Query {
 	return newListQueries
 }
 
-type Sparql struct {
-	Results Results `json:"results"`
-}
-
-type Results struct {
-	Bindings []Bindings `json:"bindings"`
-}
-
-type Bindings struct {
-	Fp TP `json:"fp"`
-	A  TP `json:"a"`
-	N  TP `json:"n"`
-	C  TP `json:"c"`
-}
-
-type TP struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
-}
-
 func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
-	fmt.Println("Executing TpExecuteSPARQLQuery() function ...")
+	// fmt.Println("Executing TpExecuteSPARQLQuery() function ...")
 
 	// defer wg.Done()
 
@@ -324,13 +324,13 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 }
 
 func Base(q string, K int) ([]string, []string, int) {
-	fmt.Println("Executing Base() function ...")
+	// fmt.Println("Executing Base() function ...")
 	// Initialisations
 	// ##################################################################################################################################################################### //
 	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
 	// ##################################################################################################################################################################### //
 	var initialQuery Query
-	initialQuery.query = q
+	initialQuery.Query = q
 
 	// List Queries
 	var listQueries []Query
@@ -350,11 +350,9 @@ func Base(q string, K int) ([]string, []string, int) {
 
 	MakeLattice(initialQuery, &listQueries)
 
-	SetSuperQueries(&listQueries)
-	// var s int = 0
+	// fmt.Println(listQueries)
 
-	// The wait listener
-	// var wg sync.WaitGroup
+	SetSuperQueries(&listQueries)
 
 	for len(listQueries) != 0 {
 
@@ -366,8 +364,8 @@ func Base(q string, K int) ([]string, []string, int) {
 
 		var Nb int
 
-		if qTemp.query != "select * where { }" {
-			Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.query)
+		if qTemp.Query != "select * where { }" {
+			Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.Query)
 
 			// add qTemp to executedQueries list with the number Nb of the results
 			executedQueries[&qTemp] = Nb
@@ -377,7 +375,7 @@ func Base(q string, K int) ([]string, []string, int) {
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
-		MakeQueries(qTemp.parents, &superQueries)
+		MakeQueries(qTemp.Parents, &superQueries)
 
 		parentsFIS := true
 
@@ -410,7 +408,7 @@ func Base(q string, K int) ([]string, []string, int) {
 			}
 		} else {
 			// qTemp has succeded
-			if parentsFIS && qTemp.query != " " {
+			if parentsFIS && qTemp.Query != " " {
 				*listXSS = append(*listXSS, qTemp)
 			}
 		}
@@ -419,16 +417,13 @@ func Base(q string, K int) ([]string, []string, int) {
 
 	var xss []string
 	for _, x := range *listXSS {
-		xss = append(xss, x.query)
+		xss = append(xss, x.Query)
 	}
 
 	var mfis []string
 	for _, m := range *listMFIS {
-		mfis = append(mfis, m.query)
+		mfis = append(mfis, m.Query)
 	}
 
 	return xss, mfis, len(executedQueries)
 }
-
-// END : BASE ALGORITHM FUNCTIONS
-// ###########################################################################################################################################################################

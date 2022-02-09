@@ -5,7 +5,7 @@ const app = express();
 
 app.use(
     cors({
-        origin: "https://dbpedia.org"
+        origin: "*"
     })
 )
 

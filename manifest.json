@@ -5,7 +5,7 @@
 	"description": "Trigger Louise algorithms on the httsp://dbpedia.org/sparql whenever the user wants it",
 	"content_scripts": [
 		{
-			"matches": ["https://dbpedia.org/sparql"],
+			"matches": ["https://dbpedia.org/sparql", "http://localhost:3030/dataset.html"],
 			"js": [
 				"libs/vuejs_lib.js",
 				"libs/wasm_exec.js",
