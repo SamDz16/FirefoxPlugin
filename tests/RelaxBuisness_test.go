@@ -49,7 +49,7 @@ func TestMakeQueries(t *testing.T) {
 	var queries []Query
 
 	// When
-	MakeQueries(tripplePatterns, &queries) // results should be: [select * where {t1.t2}, select * where {t1}, select * where {t2}, select * where { }]
+	MakeQueries(tripplePatterns, &queries, 3) // results should be: [select * where {t1.t2}, select * where {t1}, select * where {t2}, select * where { }]
 
 	// Then
 	var q1, q2, q3, q4 Query
@@ -75,7 +75,7 @@ func TestMakeLattice(t *testing.T) {
 	var queries []Query
 
 	// When
-	MakeLattice(initialQuery, &queries) // results should be: [select * where {t1.t2}, select * where {t1}, select * where {t2}, select * where { }]
+	MakeLattice(initialQuery, &queries, 3) // results should be: [select * where {t1.t2}, select * where {t1}, select * where {t2}, select * where { }]
 
 	// Then
 	var q1, q2, q3, q4 Query

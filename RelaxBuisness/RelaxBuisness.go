@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -23,17 +24,7 @@ type Results struct {
 	Bindings []Bindings `json:"bindings"`
 }
 
-type Bindings struct {
-	Fp TP `json:"fp"`
-	A  TP `json:"a"`
-	N  TP `json:"n"`
-	C  TP `json:"c"`
-}
-
-type TP struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
-}
+type Bindings struct{}
 
 func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 	// Make the HTTP request
@@ -47,6 +38,7 @@ func ExecuteSPARQLQuery(requestUrl string, sparqlQuery string) []byte {
 	client := &http.Client{}
 	r, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	r.Header.Add("Accept", "application/sparql-results+json")
 
 	res, err := client.Do(r)
 	if err != nil {
@@ -160,17 +152,18 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 	return combinations
 }
 
-func MakeQueries(tripplePatterns []string, queries *[]Query) {
+func MakeQueries(tripplePatterns []string, queries *[]Query, K int) {
 	// fmt.Println("Executing MakeQueries() function ...")
+	k := strconv.Itoa(K)
 
 	for _, t := range tripplePatterns {
 		var q Query
-		q.Query = "select * where {" + t + "}"
+		q.Query = "select * where {" + t + "} limit " + k
 		*queries = append(*queries, q)
 	}
 }
 
-func MakeLattice(initialQuery Query, queries *[]Query) {
+func MakeLattice(initialQuery Query, queries *[]Query, K int) {
 	// fmt.Println("Executing MakeLattice() function ...")
 
 	// Get all the tripple patterns
@@ -192,7 +185,7 @@ func MakeLattice(initialQuery Query, queries *[]Query) {
 		level--
 	}
 
-	MakeQueries(allTripplePatterns, queries)
+	MakeQueries(allTripplePatterns, queries, K)
 }
 
 func IsDirectParent(q1, q2 Query) bool {
@@ -323,7 +316,7 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 	return len(results.Results.Bindings)
 }
 
-func Base(q string, K int) ([]string, []string, int) {
+func Base(q string, K int, endpoint string) ([]string, []string, int) {
 	// fmt.Println("Executing Base() function ...")
 	// Initialisations
 	// ##################################################################################################################################################################### //
@@ -348,7 +341,7 @@ func Base(q string, K int) ([]string, []string, int) {
 	// ##########################################################              RUN ALGO             ######################################################################## //
 	// ##################################################################################################################################################################### //
 
-	MakeLattice(initialQuery, &listQueries)
+	MakeLattice(initialQuery, &listQueries, K+1)
 
 	// fmt.Println(listQueries)
 
@@ -364,10 +357,13 @@ func Base(q string, K int) ([]string, []string, int) {
 
 		var Nb int
 
-		if qTemp.Query != "select * where { }" {
-			Nb = TpExecuteSPARQLQuery("http://localhost:3030/base", qTemp.Query)
+		if qTemp.Query != "select * where { } limit "+strconv.Itoa(K+1) {
 
-			// add qTemp to executedQueries list with the number Nb of the results
+			dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+			var s Sparql
+			json.Unmarshal([]byte(dataBody), &s)
+
+			Nb = len(s.Results.Bindings)
 			executedQueries[&qTemp] = Nb
 		} else {
 			Nb = 1
@@ -375,7 +371,7 @@ func Base(q string, K int) ([]string, []string, int) {
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
-		MakeQueries(qTemp.Parents, &superQueries)
+		MakeQueries(qTemp.Parents, &superQueries, K+1)
 
 		parentsFIS := true
 

@@ -48,22 +48,20 @@ if(location.href === "https://dbpedia.org/sparql") {
 	const isFailingAlgorithm = async (e) => {
 		e.preventDefault();
 
-		await baseAlgorithm();
-
 		let results = [];
 		var isfailing = 0;
-
-		// Grab the results
-		let endpoint = 'https://dbpedia.org/sparql';
 
 		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 		let query = document.querySelector('#query').value;
 		try {
+			// Call the base Algorithm in DB Pedia
+			await baseAlgorithm(query, 100, "https://dbpedia.org/sparql");
+
 			// CALLING THE ISFAILING ALGORITHM
-			isfailing = await isFailing(endpoint, query);
+			isfailing = await isFailing("https://dbpedia.org/sparql", query);
 
 			// CALLING THE EXECUTEQPARQLALGORITHM
-			const response = await executeSPARQLQuery(endpoint, query);
+			const response = await executeSPARQLQuery("https://dbpedia.org/sparql", query, 101);
 
 			// FROM SPARQL RESULTS TO XML
 			const getXMLData = async (response) => {
@@ -168,11 +166,11 @@ if(location.href === "https://dbpedia.org/sparql") {
 }
 
 // Full GO
-const baseAlgorithm = async () => {
+const baseAlgorithm = async (query, K, endpoint) => {
 
-	const initialQuery = "SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }"
+	const initialQuery = query
 
-	const resGlobal = await Base(initialQuery, 3);
+	const resGlobal = await Base(initialQuery, K, endpoint);
 	console.log('LIST OF XSSs : ');
 	console.log(resGlobal[0]);
 
@@ -203,7 +201,7 @@ if (location.href === "http://localhost:3030/dataset.html") {
 		const query = document.querySelector("pre").textContent
 		const K = 3
 
-		const resGlobal = await Base(query, K)
+		const resGlobal = await Base(query, K, "http://localhost:3030/base")
 
 		// Number of executeed queries
 		const nb = document.createElement("h1")
@@ -255,7 +253,7 @@ if (location.href === "http://localhost:3030/dataset.html") {
 			el: '#rootXSS',
 			data: () => {
 				if (resGlobal[0] === 0) {
-					return { listXSS: [`empty` ]};
+					return { listXSS: [`empty`]};
 				} else {
 					return { listXSS: resGlobal[0] };
 				}
