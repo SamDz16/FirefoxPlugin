@@ -187,25 +187,69 @@ const baseAlgorithm = async () => {
 // ############################################################### IF I AM IN THE http://localhost:3030/base endpoint #######################################################################
 // ##########################################################################################################################################################################################
 
-const baseAlgo = async (query, K) => {
-	return await Base(query, K)
-}
 
 
 if (location.href === "http://localhost:3030/dataset.html") {
 
-	const jenaDiv = document.querySelector("#results-block")
-	
-	const Rdiv = document.createElement("div")
-	Rdiv.classList.add("container")
-	Rdiv.setAttribute("id", "xss")
+	// Create Button to launch the Base Algorithm
+	const btnQuery = document.createElement("btn")
+	btnQuery.setAttribute("id", "btnQuery")
+	btnQuery.classList.add("btn", "btn-danger", "btn-lg")
+	btnQuery.textContent = "Query using Base Algorithm"
 
-	const query = document.querySelector("pre")
-	const K = 100
+	const h2 = document.querySelector('h2');
+	h2.insertAdjacentElement("afterend", btnQuery)
 
-	const resGlobal = baseAlgo(query, K)
-	console.log(resGlobal)
+	btnQuery.addEventListener("click", async () => {
+		const query = "SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }"
+		const K = 3
 
-	jenaDiv.insertAdjacentElement("afterend", h1)
+		const resGlobal = await Base(query, K)
+
+		const nb = document.createElement("h1")
+		nb.classList.add("text-center")
+		nb.textContent = `Number of executed Queries: ${resGlobal[2]}`
+		document.querySelector("#results-block").insertAdjacentElement("afterend", nb)
+
+
+		const rootMFIS = document.createElement("div")
+		rootMFIS.classList.add("text-center", "text-danger")
+		rootMFIS.id = "rootMFIS"
+		rootMFIS.innerHTML += "<h1>Liste des MFIS:</h1>"
+
+		const mfisp = document.createElement("p")
+		rootMFIS.append(mfisp)
+		mfisp.setAttribute("v-for", "mfis in listMFIS")
+		mfisp.innerHTML = `{{mfis}}`
+
+		document.querySelector("#results-block").insertAdjacentElement("afterend", rootMFIS)
+
+		// Create Vue element for MFIS list
+		new Vue({
+			el: '#rootMFIS',
+			data: () => {
+				return { listMFIS: resGlobal[1] };
+			},
+		});
+
+		const rootXSS = document.createElement("div")
+		rootXSS.classList.add("text-center", "text-success")
+		rootXSS.id = "rootXSS"
+		rootXSS.innerHTML += "<h1>Liste des XSS:</h1>"
+
+		const xssp = document.createElement("p")
+		rootXSS.append(xssp)
+		xssp.setAttribute("v-for", "xss in listXSS")
+		xssp.innerHTML = `{{xss}}`
+
+		document.querySelector("#results-block").insertAdjacentElement("afterend", rootXSS)
+
+		// Create Vue element for XSS list
+		new Vue({
+			el: '#rootXSS',
+			data: () => {
+				return { listXSS: resGlobal[0] };
+			},
+		});
+	})
 }
-
