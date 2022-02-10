@@ -188,7 +188,6 @@ const baseAlgorithm = async () => {
 // ##########################################################################################################################################################################################
 
 
-
 if (location.href === "http://localhost:3030/dataset.html") {
 
 	// Create Button to launch the Base Algorithm
@@ -230,7 +229,11 @@ if (location.href === "http://localhost:3030/dataset.html") {
 		new Vue({
 			el: '#rootMFIS',
 			data: () => {
-				return { listMFIS: resGlobal[1] };
+				if (resGlobal[1].length === 0) {
+					return { listMFIS: [`empty`] }
+				} else {
+					return { listMFIS: resGlobal[1] };
+				}
 			},
 		});
 
@@ -251,7 +254,11 @@ if (location.href === "http://localhost:3030/dataset.html") {
 		new Vue({
 			el: '#rootXSS',
 			data: () => {
-				return { listXSS: resGlobal[0] };
+				if (resGlobal[0] === 0) {
+					return { listXSS: [`empty` ]};
+				} else {
+					return { listXSS: resGlobal[0] };
+				}
 			},
 		});
 	})
