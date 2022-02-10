@@ -2,12 +2,14 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Struct fields must be capitalized, if not they cannot be exported
@@ -340,13 +342,16 @@ func Base(q string, K int, endpoint string) ([]string, []string, int) {
 	// ##################################################################################################################################################################### //
 	// ##########################################################              RUN ALGO             ######################################################################## //
 	// ##################################################################################################################################################################### //
-
+	start := time.Now()
 	MakeLattice(initialQuery, &listQueries, K+1)
+	end := time.Since(start)
 
+	fmt.Println("Make Lattice Algorithm took: ", end)
 	// fmt.Println(listQueries)
 
 	SetSuperQueries(&listQueries)
 
+	start1 := time.Now()
 	for len(listQueries) != 0 {
 
 		// First element of the list
@@ -410,6 +415,8 @@ func Base(q string, K int, endpoint string) ([]string, []string, int) {
 		}
 
 	}
+	end1 := time.Since(start1)
+	fmt.Println("Executing all the queries took: ", end1)
 
 	var xss []string
 	for _, x := range *listXSS {
