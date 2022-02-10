@@ -201,21 +201,23 @@ if (location.href === "http://localhost:3030/dataset.html") {
 	h2.insertAdjacentElement("afterend", btnQuery)
 
 	btnQuery.addEventListener("click", async () => {
-		const query = "SELECT * WHERE { ?fp <http://example.com/type> <http://example.com/FullProfessor> . ?fp <http://example.com/age> ?a . ?fp <http://example.com/nationality> ?n . ?fp <http://example.com/teacherOf> ?c }"
+		const query = document.querySelector("pre").textContent
 		const K = 3
 
 		const resGlobal = await Base(query, K)
 
+		// Number of executeed queries
 		const nb = document.createElement("h1")
 		nb.classList.add("text-center")
-		nb.textContent = `Number of executed Queries: ${resGlobal[2]}`
+		nb.innerHTML = `<h1>3. Number of executed Queries: </h1>`
+		nb.innerHTML += resGlobal[2]
 		document.querySelector("#results-block").insertAdjacentElement("afterend", nb)
 
-
+		// List MFIS
 		const rootMFIS = document.createElement("div")
 		rootMFIS.classList.add("text-center", "text-danger")
 		rootMFIS.id = "rootMFIS"
-		rootMFIS.innerHTML += "<h1>Liste des MFIS:</h1>"
+		rootMFIS.innerHTML += "<h1>2. Liste des MFIS:</h1>"
 
 		const mfisp = document.createElement("p")
 		rootMFIS.append(mfisp)
@@ -232,10 +234,11 @@ if (location.href === "http://localhost:3030/dataset.html") {
 			},
 		});
 
+		// List XSS
 		const rootXSS = document.createElement("div")
 		rootXSS.classList.add("text-center", "text-success")
 		rootXSS.id = "rootXSS"
-		rootXSS.innerHTML += "<h1>Liste des XSS:</h1>"
+		rootXSS.innerHTML += "<h1>1. Liste des XSS:</h1>"
 
 		const xssp = document.createElement("p")
 		rootXSS.append(xssp)
