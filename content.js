@@ -30,111 +30,65 @@ if(location.href === "https://dbpedia.org/sparql") {
 	// Apprnd the two elements to the div element
 	isFailingDiv.append(isFailingInput, isFailingLabel);
 
+	// Div that contains label and input for the threshold K
+	const KDiv = document.createElement("div")
+	KDiv.id = "K"
+
+	// Label of threshold K
+	const KLabel = document.createElement("label")
+	KLabel.setAttribute('for', 'k');
+	KLabel.append('Insert the threshold K');
+	KLabel.style.marginLeft = '10px';
+	KLabel.style.marginBottom = '10px';
+
+	const KInput = document.createElement('input');
+	KInput.setAttribute('type', 'number');
+	KInput.setAttribute('step', '50');
+	KInput.setAttribute('min', '0');
+	KInput.setAttribute('value', 0);
+	KInput.setAttribute('id', 'k');
+	KInput.setAttribute('name', 'k');
+
+	KDiv.append(KInput, KLabel)
+
 	// Grab the Execute Query Button from "https://dbpedia.org/sparql"
 	const executeQuery = document.querySelector('#run');
 
 	// And then append the div element right before the execute query button
 	executeQuery.insertAdjacentElement('beforeBegin', isFailingDiv);
+	executeQuery.insertAdjacentElement('beforeBegin', KDiv);
 
 	// #################################################################################### PART 2 ################################################################################# //
-	let resultsInput = document.createElement('input');
-	let rootDiv = document.createElement('div');
+	// let resultsInput = document.createElement('input');
 	const sparqlForm = document.querySelector('#sparql_form');
-
-	// Create a global variable to hold true or fale in order to know whether a user has thecked the checkbox or not
-	let luisAlgorithmsChecked = false;
 
 	// GET TRIGGERED WHENEVER THE USER CLICKS ON THE 'EXECUTE QUERY' BUTTON
 	const isFailingAlgorithm = async (e) => {
 		e.preventDefault();
 
-		let results = [];
 		var isfailing = 0;
 
 		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 		let query = document.querySelector('#query').value;
 		try {
 			// Call the base Algorithm in DB Pedia
-			await baseAlgorithm(query, 100, "https://dbpedia.org/sparql");
+			const resGlobal = await Base(query, +KInput.value, "https://dbpedia.org/sparql");
 
 			// CALLING THE ISFAILING ALGORITHM
 			isfailing = await isFailing("https://dbpedia.org/sparql", query);
 
-			// CALLING THE EXECUTEQPARQLALGORITHM
-			const response = await executeSPARQLQuery("https://dbpedia.org/sparql", query, 101);
+			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}))
 
-			// FROM SPARQL RESULTS TO XML
-			const getXMLData = async (response) => {
-				const str = await response.text();
-				const data = await new window.DOMParser().parseFromString(
-					str,
-					'text/xml'
-				);
-				const results = data.getElementsByTagName('uri');
-				return results;
-			};
+			// Displaying the results
+			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
+			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
-			// Response is in XML format
-			results = await getXMLData(response);
+			addTitleToDom(document.querySelector("#options"), {title: "Statistics"})
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
 
-			// TEST VALE OF ISFAILING
-			if (isfailing === 1) {
-				// There is no results
-				document.querySelector(
-					'#options'
-				).innerHTML += `<h1 class="text-center text-danger">isFailing returns: <b>${isfailing}</b></h1>`;
-			} else {
-				// There is at least one result
-				document.querySelector(
-					'#options'
-				).innerHTML += `<h1 class="text-center text-success">isFailing returns: <b>${isfailing}</b></h1>`;
-
-				// Create a div element to contain label and input
-				const resultsDiv = document.createElement('div');
-
-				// Creat the label element
-				const resultsLabel = document.createElement('label');
-				resultsLabel.setAttribute('for', 'resultsLabel');
-				resultsLabel.append('Do you want to display results ?');
-				resultsLabel.style.marginLeft = '10px';
-
-				// Create the checkbox element
-				resultsInput.setAttribute('type', 'checkbox');
-				resultsInput.setAttribute('id', 'resultsLabel');
-				resultsInput.setAttribute('name', 'resultsLabel');
-
-				// Apprnd the two elements to the div element
-				resultsDiv.append(resultsInput, resultsLabel);
-
-				// And then append the div element right before the execute query button
-				document.querySelector('fieldset').append(resultsDiv);
-
-				// By default, the results are hidden
-				rootDiv.setAttribute('style', 'display: none');
-
-				rootDiv.id = 'rootResults';
-				rootDiv.innerHTML = `<h2>Results</h2> <hr>`;
-				rootDiv.classList.add('text-center');
-
-				const resultDiv = document.createElement('div');
-				rootDiv.append(resultDiv);
-
-				resultDiv.setAttribute('v-for', 'result in results');
-				resultDiv.innerHTML = `
-					<p><a :href=result.textContent>{{ result.textContent }}</a></p>
-				`;
-				document
-					.querySelector('#options')
-					.insertAdjacentElement('beforebegin', rootDiv);
-
-				// Create Vue component
-				new Vue({
-					el: '#rootResults',
-					data: () => {
-						return { results };
-					},
-				});
-			}
+			// insertStats(document.querySelector("#options"), resGlobal)
 		} catch (err) {
 			console.error('Caught exception', err);
 		}
@@ -151,35 +105,7 @@ if(location.href === "https://dbpedia.org/sparql") {
 			});
 		}
 	});
-
-	resultsInput.addEventListener('change', () => {
-		if (resultsInput.checked) {
-			document
-				.querySelector('#rootResults')
-				.setAttribute('style', 'display: block');
-		} else {
-			document
-				.querySelector('#rootResults')
-				.setAttribute('style', 'display: none');
-		}
-	});
 }
-
-// Full GO
-const baseAlgorithm = async (query, K, endpoint) => {
-
-	const initialQuery = query
-
-	const resGlobal = await Base(initialQuery, K, endpoint);
-	console.log('LIST OF XSSs : ');
-	console.log(resGlobal[0]);
-
-	console.log('LIST OF MFISs : ');
-	console.log(resGlobal[1]);
-
-	console.log('NUMBER OF EXECUTED QUERIES: ');
-	console.log(resGlobal[2]);
-};
 
 // ##########################################################################################################################################################################################
 // ############################################################### IF I AM IN THE http://localhost:3030/base endpoint #######################################################################
@@ -203,61 +129,64 @@ if (location.href === "http://localhost:3030/dataset.html") {
 
 		const resGlobal = await Base(query, K, "http://localhost:3030/base")
 
-		// Number of executeed queries
-		const nb = document.createElement("h1")
-		nb.classList.add("text-center")
-		nb.innerHTML = `<h1>3. Number of executed Queries: </h1>`
-		nb.innerHTML += resGlobal[2]
-		document.querySelector("#results-block").insertAdjacentElement("afterend", nb)
+		const container = document.createElement("div")
+		container.classList.add("class", "container")
 
-		// List MFIS
-		const rootMFIS = document.createElement("div")
-		rootMFIS.classList.add("text-center", "text-danger")
-		rootMFIS.id = "rootMFIS"
-		rootMFIS.innerHTML += "<h1>2. Liste des MFIS:</h1>"
+		// Displaying the results
+		container.append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
+		container.append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
-		const mfisp = document.createElement("p")
-		rootMFIS.append(mfisp)
-		mfisp.setAttribute("v-for", "mfis in listMFIS")
-		mfisp.innerHTML = `{{mfis}}`
+		container.append(addTitleToDom({title: "Statistics"}))
+		container.append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
+		container.append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
+		container.append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
 
-		document.querySelector("#results-block").insertAdjacentElement("afterend", rootMFIS)
-
-		// Create Vue element for MFIS list
-		new Vue({
-			el: '#rootMFIS',
-			data: () => {
-				if (resGlobal[1].length === 0) {
-					return { listMFIS: [`empty`] }
-				} else {
-					return { listMFIS: resGlobal[1] };
-				}
-			},
-		});
-
-		// List XSS
-		const rootXSS = document.createElement("div")
-		rootXSS.classList.add("text-center", "text-success")
-		rootXSS.id = "rootXSS"
-		rootXSS.innerHTML += "<h1>1. Liste des XSS:</h1>"
-
-		const xssp = document.createElement("p")
-		rootXSS.append(xssp)
-		xssp.setAttribute("v-for", "xss in listXSS")
-		xssp.innerHTML = `{{xss}}`
-
-		document.querySelector("#results-block").insertAdjacentElement("afterend", rootXSS)
-
-		// Create Vue element for XSS list
-		new Vue({
-			el: '#rootXSS',
-			data: () => {
-				if (resGlobal[0] === 0) {
-					return { listXSS: [`empty`]};
-				} else {
-					return { listXSS: resGlobal[0] };
-				}
-			},
-		});
+		document.querySelector("body").append(container)
 	})
+}
+
+const insertToDOM = (data, numberOfRows = 0) => {
+	const div = document.createElement("div")
+	div.classList.add("form-group", "row")
+
+	const label = document.createElement("label")
+	label.setAttribute("for", data.id)
+	label.textContent = data.text
+
+	let textarea
+
+	if (numberOfRows === 0) {
+		textarea = document.createElement("input")
+		textarea.classList.add("form-control", "form-control-sm")
+		textarea.setAttribute("value", data.value)
+		textarea.setAttribute("name", data.id)
+		textarea.setAttribute("id", data.id)
+		textarea.setAttribute("disabled", true)
+	} else {
+		textarea = document.createElement("textarea")
+		textarea.classList.add("form-control")
+		textarea.setAttribute("rows", numberOfRows)
+		textarea.setAttribute("name", data.id)
+		textarea.setAttribute("id", data.id)
+		textarea.setAttribute("disabled", true)
+		
+		if (typeof(data.value) === "object") {
+			for (v of data.value) {
+				textarea.textContent += v
+				textarea.textContent += "\n\n"
+			}
+		} else {
+			textarea.textContent = data.value
+		}
+	}
+
+	div.append(label, document.createElement("br"), textarea)
+	return div
+}
+
+const addTitleToDom = (data) => {
+	const h1 = document.createElement("h1")
+	h1.textContent = data.title
+
+	return h1
 }

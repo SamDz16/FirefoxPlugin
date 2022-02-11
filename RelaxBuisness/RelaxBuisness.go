@@ -2,7 +2,6 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -318,7 +317,7 @@ func TpExecuteSPARQLQuery(requestUrl string, sparqlQuery string) int {
 	return len(results.Results.Bindings)
 }
 
-func Base(q string, K int, endpoint string) ([]string, []string, int) {
+func Base(q string, K int, endpoint string) ([]string, []string, int, string, string) {
 	// fmt.Println("Executing Base() function ...")
 	// Initialisations
 	// ##################################################################################################################################################################### //
@@ -344,9 +343,9 @@ func Base(q string, K int, endpoint string) ([]string, []string, int) {
 	// ##################################################################################################################################################################### //
 	start := time.Now()
 	MakeLattice(initialQuery, &listQueries, K+1)
-	end := time.Since(start)
+	makeLatticeTime := time.Since(start)
 
-	fmt.Println("Make Lattice Algorithm took: ", end)
+	// fmt.Println("Make Lattice Algorithm took: ", end)
 	// fmt.Println(listQueries)
 
 	SetSuperQueries(&listQueries)
@@ -415,8 +414,8 @@ func Base(q string, K int, endpoint string) ([]string, []string, int) {
 		}
 
 	}
-	end1 := time.Since(start1)
-	fmt.Println("Executing all the queries took: ", end1)
+	executingQueriesTime := time.Since(start1)
+	// fmt.Println("Executing all the queries took: ", end1)
 
 	var xss []string
 	for _, x := range *listXSS {
@@ -428,5 +427,5 @@ func Base(q string, K int, endpoint string) ([]string, []string, int) {
 		mfis = append(mfis, m.Query)
 	}
 
-	return xss, mfis, len(executedQueries)
+	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
 }

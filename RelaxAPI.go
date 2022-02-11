@@ -54,7 +54,6 @@ func isFailing() js.Func {
 			resolve := args[0]
 
 			go func() {
-				// res := RelaxBuisness.IsFailing(requestUrl, sparqlQuery)
 				var res int
 				dataBody := RelaxBuisness.ExecuteSPARQLQuery(requestUrl, sparqlQuery)
 
@@ -94,7 +93,7 @@ func Base() js.Func {
 			resolve := args[0]
 
 			go func() {
-				xss, mfis, nbr := RelaxBuisness.Base(initialQuery, K, endpoint)
+				xss, mfis, nbr, makeLatticeTime, executingQueriesTime := RelaxBuisness.Base(initialQuery, K, endpoint)
 
 				var resXSS []interface{}
 				for _, q := range xss {
@@ -114,6 +113,8 @@ func Base() js.Func {
 				resGlobal = append(resGlobal, resXSS)
 				resGlobal = append(resGlobal, resMFIS)
 				resGlobal = append(resGlobal, nbr)
+				resGlobal = append(resGlobal, makeLatticeTime)
+				resGlobal = append(resGlobal, executingQueriesTime)
 
 				// Return value of the Base Algorithm
 				// return resGlobal
@@ -128,63 +129,12 @@ func Base() js.Func {
 	})
 }
 
-// func SparqlBase() js.Func {
-// 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-// 		// Parameters of the base algorithm
-// 		//1.  initial query : string
-// 		initialQuery := args[0].String()
-
-// 		//2.  The constant K : integer
-// 		K := args[1].Int()
-
-// 		//3.  The endpoint
-// 		endpoint := args[2].String()
-
-// 		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-// 			resolve := args[0]
-
-// 			go func() {
-// 				xss, mfis, nbr := RelaxBuisness.Base(initialQuery, K, endpoint)
-
-// 				var resXSS []interface{}
-// 				for _, q := range xss {
-// 					resXSS = append(resXSS, q)
-// 				}
-
-// 				// List of MFIS
-// 				var resMFIS []interface{}
-// 				for _, q := range mfis {
-// 					resMFIS = append(resMFIS, q)
-// 				}
-
-// 				// Number of results
-// 				var resGlobal []interface{}
-
-// 				// Encapsulate everything into an object
-// 				resGlobal = append(resGlobal, resXSS)
-// 				resGlobal = append(resGlobal, resMFIS)
-// 				resGlobal = append(resGlobal, nbr)
-
-// 				// Return value of the Base Algorithm
-// 				// return resGlobal
-// 				resolve.Invoke(resGlobal)
-// 			}()
-// 			// The handler of a Promise doesn't return any value
-// 			return nil
-// 		})
-// 		// Create and return the Promise object
-// 		promiseConstructor := js.Global().Get("Promise")
-// 		return promiseConstructor.New(handler)
-// 	})
-// }
-
 func main() {
 	c := make(chan int)
 
 	js.Global().Set("executeSPARQLQuery", executeSPARQLQuery())
 	js.Global().Set("isFailing", isFailing())
 	js.Global().Set("Base", Base())
-	// js.Global().Set("SparqlBase", SparqlBase())
 
 	<-c
 }
