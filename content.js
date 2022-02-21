@@ -1,13 +1,15 @@
 // ##################################################################################################################################################################### //
 // WASM SECTION - LOAD WASM
 const go = new Go();
-
+// https://www.lias-lab.fr/ftppublic/recherche/fetch.wasm
 WebAssembly.instantiateStreaming(
 	fetch('http://localhost:3000/fetch.wasm'),
 	go.importObject
 ).then((result) => {
 	go.run(result.instance);
 });
+
+// link to lias: https://www.lias-lab.fr/ftppublic/recherche/fetch.wasm
 
 // #################################################################################### PART 1 ################################################################################# //
 // Create a div element to contain label and input
@@ -66,16 +68,20 @@ if(location.href === "https://dbpedia.org/sparql") {
 	const isFailingAlgorithm = async (e) => {
 		e.preventDefault();
 
-		var isfailing = 0;
+		let isfailing
+		let resGlobal
 
-		// let leoQuery = 'SELECT * WHERE { ?athlete  rdfs:label  "Lionel Messi"@en ; dbo:number  ?number }'
 		let query = document.querySelector('#query').value;
 		try {
 			// Call the base Algorithm in DB Pedia
-			const resGlobal = await Base(query, +KInput.value, "https://dbpedia.org/sparql");
+			resGlobal = await Base(query, +KInput.value, "https://dbpedia.org/sparql");
 
 			// CALLING THE ISFAILING ALGORITHM
 			isfailing = await isFailing("https://dbpedia.org/sparql", query);
+
+			document.querySelector("#options").append(document.createElement("hr"))
+			addTitleToDom(document.querySelector("#options"), { title: "BASE ALGORITHM" })
+			document.querySelector("#options").append(document.createElement("hr"))
 
 			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}))
 
@@ -83,7 +89,29 @@ if(location.href === "https://dbpedia.org/sparql") {
 			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
 			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
-			addTitleToDom(document.querySelector("#options"), {title: "Statistics"})
+			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
+
+
+			// Call the base Algorithm in DB Pedia
+			resGlobal = await BFS(query, +KInput.value, "https://dbpedia.org/sparql");
+
+			// CALLING THE ISFAILING ALGORITHM
+			isfailing = await isFailing("https://dbpedia.org/sparql", query);
+
+			document.querySelector("#options").append(document.createElement("hr"))
+			addTitleToDom(document.querySelector("#options"), { title: "BFS ALGORITHM" })
+			document.querySelector("#options").append(document.createElement("hr"))
+
+			insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"})
+
+			// Displaying the results
+			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
+			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
+
+			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
 			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
 			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
 			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
@@ -184,9 +212,9 @@ const insertToDOM = (data, numberOfRows = 0) => {
 	return div
 }
 
-const addTitleToDom = (data) => {
-	const h1 = document.createElement("h1")
+const addTitleToDom = (element, data, heading = 'h1') => {
+	const h1 = document.createElement(heading)
 	h1.textContent = data.title
 
-	return h1
+	element.append(h1)
 }

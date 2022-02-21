@@ -1,0 +1,5 @@
+## Docker command:
+docker run --name fuseki -d  -p 3030:3030 -e ADMIN_PASSWORD=pw123 stain/jena-fuseki
+
+## DBPEDIA Query:
+SELECT * WHERE { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }

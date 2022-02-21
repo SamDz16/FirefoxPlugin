@@ -325,28 +325,21 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 	// ##################################################################################################################################################################### //
 	var initialQuery Query
 	initialQuery.Query = q
-
 	// List Queries
 	var listQueries []Query
-
 	// Executed Queries : contains for each qury, the number of the results
 	var executedQueries map[*Query]int = make(map[*Query]int)
-
 	// List FIS : all rthe queries that fail
 	var listFIS map[*Query]bool = make(map[*Query]bool)
 
 	listXSS := &[]Query{}
 	listMFIS := &[]Query{}
-
 	// ##################################################################################################################################################################### //
 	// ##########################################################              RUN ALGO             ######################################################################## //
 	// ##################################################################################################################################################################### //
 	start := time.Now()
 	MakeLattice(initialQuery, &listQueries, K+1)
 	makeLatticeTime := time.Since(start)
-
-	// fmt.Println("Make Lattice Algorithm took: ", end)
-	// fmt.Println(listQueries)
 
 	SetSuperQueries(&listQueries)
 
@@ -416,16 +409,120 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 	}
 	executingQueriesTime := time.Since(start1)
 	// fmt.Println("Executing all the queries took: ", end1)
-
 	var xss []string
 	for _, x := range *listXSS {
 		xss = append(xss, x.Query)
 	}
-
 	var mfis []string
 	for _, m := range *listMFIS {
 		mfis = append(mfis, m.Query)
 	}
+	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
+}
 
+func BFS(q string, K int, endpoint string) ([]string, []string, int, string, string) {
+	// fmt.Println("Executing Base() function ...")
+	// Initialisations
+	// ##################################################################################################################################################################### //
+	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
+	// ##################################################################################################################################################################### //
+	var initialQuery Query
+	initialQuery.Query = q
+	// List Queries
+	var listQueries []Query
+	// Executed Queries : contains for each qury, the number of the results
+	var executedQueries map[*Query]int = make(map[*Query]int)
+	// List FIS : all rthe queries that fail
+	var listFIS map[*Query]bool = make(map[*Query]bool)
+
+	listXSS := &[]Query{}
+	listMFIS := &[]Query{}
+	// ##################################################################################################################################################################### //
+	// ##########################################################              RUN ALGO             ######################################################################## //
+	// ##################################################################################################################################################################### //
+	start := time.Now()
+	MakeLattice(initialQuery, &listQueries, K+1)
+	makeLatticeTime := time.Since(start)
+
+	SetSuperQueries(&listQueries)
+
+	start1 := time.Now()
+	for len(listQueries) != 0 {
+
+		// First element of the list
+		qTemp := listQueries[0]
+
+		// Remove the first element from the list
+		listQueries = listQueries[1:]
+
+		// NO QUERY EXECUTED HERE
+
+		// Get Direct Super Queries Of 'qTemp'
+		var superQueries []Query
+		MakeQueries(qTemp.Parents, &superQueries, K+1)
+
+		parentsFIS := true
+
+		i := 0
+
+		for parentsFIS && i < len(superQueries) {
+			superQuery := superQueries[i]
+			if !ContainsKey(&listFIS, superQuery) {
+				parentsFIS = false
+			}
+			i++
+		}
+		if parentsFIS {
+			// We execute query
+			var Nb int
+
+			if qTemp.Query != "select * where { } limit "+strconv.Itoa(K+1) {
+
+				dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+				var s Sparql
+				json.Unmarshal([]byte(dataBody), &s)
+
+				Nb = len(s.Results.Bindings)
+				executedQueries[&qTemp] = Nb
+			} else {
+				Nb = 1
+			}
+
+			if Nb > K {
+				// Query qTemp fails
+
+				// We remove all the superqueries of qTemp from listMFIS list
+				for _, qSQ := range superQueries {
+					index, found := FindQuery(*listMFIS, qSQ)
+					if found {
+						*listMFIS = RemoveQuery(*listMFIS, index)
+					}
+				}
+
+				// Since the request qTemp has failed, we add it to the list of FIS
+				listFIS[&qTemp] = true
+
+				// qTemps is the new MFIS
+				*listMFIS = append(*listMFIS, qTemp)
+
+			} else {
+				// qTemp has succeded
+				if qTemp.Query != " " {
+					*listXSS = append(*listXSS, qTemp)
+				}
+			}
+		}
+
+	}
+	executingQueriesTime := time.Since(start1)
+	// fmt.Println("Executing all the queries took: ", end1)
+	var xss []string
+	for _, x := range *listXSS {
+		xss = append(xss, x.Query)
+	}
+	var mfis []string
+	for _, m := range *listMFIS {
+		mfis = append(mfis, m.Query)
+	}
 	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
 }
