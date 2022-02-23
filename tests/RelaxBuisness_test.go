@@ -8,7 +8,7 @@ import (
 func TestGetQueryTripplePatterns(t *testing.T) {
 	// Given
 	var q Query
-	q.Query = "select * where {t1 . t2 . t3}"
+	q.Query = "select * where { t1 . t2 . t3 }"
 
 	// When
 	result := GetQueryTripplePatterns(q) // results should be: [t1, t2, t3]
@@ -53,10 +53,10 @@ func TestMakeQueries(t *testing.T) {
 
 	// Then
 	var q1, q2, q3, q4 Query
-	q1.Query = "select * where {t1 . t2}"
-	q2.Query = "select * where {t1}"
-	q3.Query = "select * where {t2}"
-	q4.Query = "select * where { }"
+	q1.Query = "select * where { t1 . t2 } limit 4"
+	q2.Query = "select * where { t1 } limit 4"
+	q3.Query = "select * where { t2 } limit 4"
+	q4.Query = "select * where {  } limit 4"
 	expected := []Query{q1, q2, q3, q4}
 	for i, q := range queries {
 		if q.Query != expected[i].Query {
@@ -70,7 +70,7 @@ func TestMakeQueries(t *testing.T) {
 func TestMakeLattice(t *testing.T) {
 	// Given
 	var initialQuery Query
-	initialQuery.Query = "select * where {t1 . t2}"
+	initialQuery.Query = "select * where { t1 . t2 }"
 
 	var queries []Query
 
@@ -79,10 +79,10 @@ func TestMakeLattice(t *testing.T) {
 
 	// Then
 	var q1, q2, q3, q4 Query
-	q1.Query = "select * where {t1 . t2}"
-	q2.Query = "select * where {t1}"
-	q3.Query = "select * where {t2}"
-	q4.Query = "select * where { }"
+	q1.Query = "select * where { t1 . t2 } limit 4"
+	q2.Query = "select * where { t1 } limit 4"
+	q3.Query = "select * where { t2 } limit 4"
+	q4.Query = "select * where {  } limit 4"
 
 	expected := []Query{q1, q2, q3, q4}
 	for i, q := range queries {
@@ -249,3 +249,58 @@ func TestRemoveQuery(t *testing.T) {
 	}
 	t.Logf("RemoveQuery PASSED. Expected %v found %v\n", expected, newListQuery)
 }
+
+func TestGetQueryVariables(t *testing.T) {
+	// Given
+	var query Query
+	query.Query = "SELECT * WHERE { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }"
+
+	// When
+	result := GetQueryVariables(query)
+
+	// Then
+	expected := 5
+
+	if expected == result {
+		t.Logf("GetQueryVariables PASSED. Expected %v found %v \n", expected, result)
+		return
+	} else {
+		t.Errorf("GetQueryVariables FAILED. Expected %v found %v \n", expected, result)
+	}
+}
+
+func TestRemoveQueryTriplePattern(t *testing.T) {
+	// Given
+	var query Query
+	query.Query = "select * where { t1 . t2 . t3 . t4 }"
+
+	newQuery := RemoveQueryTriplePattern(query, "t3", 3)
+	// Then
+	var expectedQuery Query
+	expectedQuery.Query = "select * where { t1 . t2 . t4 } limit 4"
+	if expectedQuery.Query == newQuery.Query {
+		t.Logf("RemoveQueryTriplePattern PASSED. Expected %v found %v \n", expectedQuery.Query, newQuery.Query)
+		return
+	} else {
+		t.Errorf("RemoveQueryTriplePattern FAILED. Expected %v found %v \n", expectedQuery.Query, newQuery.Query)
+	}
+}
+
+// func TestExistQuery(t *testing.T) {
+// 	// Given
+// 	var queries []string
+
+// 	queries = append(queries, "select * where { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> }", "select * where { ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> }", "select * where { ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract }")
+
+// 	// When
+// 	result := ExistQuery(queries, "select * where { ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> }")
+
+// 	// Then
+// 	expected := true
+// 	if expected {
+// 		t.Logf("ExistQuery PASSED. Expected %v found %v \n", expected, result)
+// 		return
+// 	} else {
+// 		t.Errorf("ExistQuery FAILED. Expected %v found %v \n", expected, result)
+// 	}
+// }

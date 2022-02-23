@@ -84,7 +84,13 @@ func GetQueryTripplePatterns(initialQuery Query) []string {
 		}
 	}
 
-	return strings.Split(triplePatternsStr, " . ")
+	tps := strings.Split(triplePatternsStr, " . ")
+	var resultTPs []string
+	for _, tp := range tps {
+		resultTPs = append(resultTPs, strings.TrimSpace(tp))
+	}
+
+	return resultTPs
 }
 
 func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
@@ -155,11 +161,12 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 
 func MakeQueries(tripplePatterns []string, queries *[]Query, K int) {
 	// fmt.Println("Executing MakeQueries() function ...")
+	K++
 	k := strconv.Itoa(K)
 
 	for _, t := range tripplePatterns {
 		var q Query
-		q.Query = "select * where {" + t + "} limit " + k
+		q.Query = "select * where { " + strings.TrimSpace(t) + " } limit " + k
 		*queries = append(*queries, q)
 	}
 }
@@ -338,7 +345,7 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 	// ##########################################################              RUN ALGO             ######################################################################## //
 	// ##################################################################################################################################################################### //
 	start := time.Now()
-	MakeLattice(initialQuery, &listQueries, K+1)
+	MakeLattice(initialQuery, &listQueries, K)
 	makeLatticeTime := time.Since(start)
 
 	SetSuperQueries(&listQueries)
@@ -354,7 +361,7 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 
 		var Nb int
 
-		if qTemp.Query != "select * where { } limit "+strconv.Itoa(K+1) {
+		if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 
 			dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
 			var s Sparql
@@ -368,7 +375,7 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
-		MakeQueries(qTemp.Parents, &superQueries, K+1)
+		MakeQueries(qTemp.Parents, &superQueries, K)
 
 		parentsFIS := true
 
@@ -441,7 +448,7 @@ func BFS(q string, K int, endpoint string) ([]string, []string, int, string, str
 	// ##########################################################              RUN ALGO             ######################################################################## //
 	// ##################################################################################################################################################################### //
 	start := time.Now()
-	MakeLattice(initialQuery, &listQueries, K+1)
+	MakeLattice(initialQuery, &listQueries, K)
 	makeLatticeTime := time.Since(start)
 
 	SetSuperQueries(&listQueries)
@@ -459,7 +466,7 @@ func BFS(q string, K int, endpoint string) ([]string, []string, int, string, str
 
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
-		MakeQueries(qTemp.Parents, &superQueries, K+1)
+		MakeQueries(qTemp.Parents, &superQueries, K)
 
 		parentsFIS := true
 
@@ -476,7 +483,7 @@ func BFS(q string, K int, endpoint string) ([]string, []string, int, string, str
 			// We execute query
 			var Nb int
 
-			if qTemp.Query != "select * where { } limit "+strconv.Itoa(K+1) {
+			if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 
 				dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
 				var s Sparql
@@ -524,5 +531,198 @@ func BFS(q string, K int, endpoint string) ([]string, []string, int, string, str
 	for _, m := range *listMFIS {
 		mfis = append(mfis, m.Query)
 	}
+	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
+}
+
+func GetQueryVariables(query Query) int {
+	start := false
+	tp := ""
+	existed := false
+	var variables []string
+
+	for _, ch := range query.Query {
+		char := string(ch)
+
+		if char == "?" {
+			start = true
+			continue
+		} else if char == " " {
+			if start {
+				for _, variable := range variables {
+					if variable == tp {
+						existed = true
+						break
+					}
+				}
+				if !existed {
+					variables = append(variables, tp)
+				}
+				existed = false
+				tp = ""
+			}
+			start = false
+			continue
+		}
+
+		if start {
+			tp += char
+		}
+	}
+
+	return len(variables)
+}
+
+func RemoveQueryTriplePattern(query Query, tp string, K int) Query {
+	queryTPs := GetQueryTripplePatterns(query)
+	var newQueryTPs []string
+
+	for _, queryTP := range queryTPs {
+		if strings.TrimSpace(queryTP) != strings.TrimSpace(tp) {
+			newQueryTPs = append(newQueryTPs, strings.TrimSpace(queryTP))
+		}
+	}
+
+	// Make a new query with these triple patterns
+	var q Query
+	q.Query = "select * where { "
+	for i, tp := range newQueryTPs {
+		if i == len(newQueryTPs)-1 {
+			q.Query += strings.TrimSpace(tp)
+		} else {
+			q.Query += strings.TrimSpace(tp) + " . "
+		}
+	}
+	q.Query += " } limit " + strconv.Itoa(K+1)
+
+	return q
+}
+
+func ExistQuery(queries []Query, query Query) bool {
+	for _, q := range queries {
+		if q.Query == query.Query {
+			return true
+		}
+	}
+	return false
+}
+
+func Var(q string, K int, endpoint string) ([]string, []string, int, string, string) {
+	// fmt.Println("Executing Base() function ...")
+	// Initialisations
+	// ##################################################################################################################################################################### //
+	// ##########################################################           INITIALIZE ALGO         ######################################################################## //
+	// ##################################################################################################################################################################### //
+	var initialQuery Query
+	initialQuery.Query = q
+	// List Queries
+	var listQueries []Query
+	// Executed Queries : contains for each qury, the number of the results
+	var executedQueries map[*Query]int = make(map[*Query]int)
+	// List FIS : all rthe queries that fail
+	var listFIS map[*Query]bool = make(map[*Query]bool)
+
+	listXSS := &[]Query{}
+	listMFIS := &[]Query{}
+
+	var notToExecuteQueries []Query
+	// ##################################################################################################################################################################### //
+	// ##########################################################              RUN ALGO             ######################################################################## //
+	// ##################################################################################################################################################################### //
+	start := time.Now()
+	MakeLattice(initialQuery, &listQueries, K)
+	makeLatticeTime := time.Since(start)
+
+	SetSuperQueries(&listQueries)
+
+	start1 := time.Now()
+	for len(listQueries) != 0 {
+		// First element of the list
+		qTemp := listQueries[0]
+
+		// Remove the first element from the list
+		listQueries = listQueries[1:]
+
+		// NO QUERY EXECUTED HERE
+
+		// Get Direct Super Queries Of 'qTemp'
+		var superQueries []Query
+		MakeQueries(qTemp.Parents, &superQueries, K)
+
+		parentsFIS := true
+
+		i := 0
+		for parentsFIS && i < len(superQueries) {
+			superQuery := superQueries[i]
+			if !ContainsKey(&listFIS, superQuery) {
+				parentsFIS = false
+			}
+			i++
+		}
+
+		if parentsFIS {
+			if !ExistQuery(notToExecuteQueries, qTemp) {
+
+				// We execute query
+				var Nb int
+
+				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
+
+					dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+					var s Sparql
+					json.Unmarshal([]byte(dataBody), &s)
+
+					Nb = len(s.Results.Bindings)
+					executedQueries[&qTemp] = Nb
+				} else {
+					Nb = 1
+				}
+
+				if Nb > K {
+					// Query qTemp fails : FIS
+
+					// We remove all the superqueries of qTemp from listMFIS list
+					for _, qSQ := range superQueries {
+						index, found := FindQuery(*listMFIS, qSQ)
+						if found {
+							*listMFIS = RemoveQuery(*listMFIS, index)
+						}
+					}
+
+					// Since the request qTemp has failed, we add it to the list of FIS
+					listFIS[&qTemp] = true
+
+					// qTemps is the new MFIS
+					*listMFIS = append(*listMFIS, qTemp)
+
+					// Var property
+					// Get qTemp Triple Patterns
+					qTempTPs := GetQueryTripplePatterns(qTemp)
+					for _, tp := range qTempTPs {
+						// subQ is {qtemp - tp}
+						subQ := RemoveQueryTriplePattern(qTemp, tp, K)
+						if GetQueryVariables(subQ) == GetQueryVariables(qTemp) {
+							// executedQueries[&subQ] = K + 1
+							notToExecuteQueries = append(notToExecuteQueries, subQ)
+						}
+					}
+				} else {
+					// qTemp has succeded
+					if qTemp.Query != " " {
+						*listXSS = append(*listXSS, qTemp)
+					}
+				}
+			}
+		}
+	}
+	executingQueriesTime := time.Since(start1)
+	var xss []string
+	for _, x := range *listXSS {
+		xss = append(xss, x.Query)
+	}
+	var mfis []string
+	for _, m := range *listMFIS {
+		mfis = append(mfis, m.Query)
+	}
+
 	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
 }

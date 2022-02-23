@@ -45,7 +45,7 @@ if(location.href === "https://dbpedia.org/sparql") {
 
 	const KInput = document.createElement('input');
 	KInput.setAttribute('type', 'number');
-	KInput.setAttribute('step', '50');
+	KInput.setAttribute('step', '1');
 	KInput.setAttribute('min', '0');
 	KInput.setAttribute('value', 0);
 	KInput.setAttribute('id', 'k');
@@ -103,6 +103,28 @@ if(location.href === "https://dbpedia.org/sparql") {
 
 			document.querySelector("#options").append(document.createElement("hr"))
 			addTitleToDom(document.querySelector("#options"), { title: "BFS ALGORITHM" })
+			document.querySelector("#options").append(document.createElement("hr"))
+
+			insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"})
+
+			// Displaying the results
+			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
+			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
+
+			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
+
+
+			// Call the base Algorithm in DB Pedia
+			resGlobal = await Var(query, +KInput.value, "https://dbpedia.org/sparql");
+
+			// CALLING THE ISFAILING ALGORITHM
+			isfailing = await isFailing("https://dbpedia.org/sparql", query);
+
+			document.querySelector("#options").append(document.createElement("hr"))
+			addTitleToDom(document.querySelector("#options"), { title: "Var ALGORITHM" })
 			document.querySelector("#options").append(document.createElement("hr"))
 
 			insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"})
