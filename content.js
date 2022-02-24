@@ -9,6 +9,55 @@ WebAssembly.instantiateStreaming(
 	go.run(result.instance);
 });
 
+// Utility functions
+const insertToDOM = (data, numberOfRows, disable=true) => {
+	const div = document.createElement("div")
+	div.classList.add("form-group", "row")
+
+	const label = document.createElement("label")
+	label.setAttribute("for", data.id)
+	label.textContent = data.text
+
+	let textarea
+
+	if (numberOfRows === 0) {
+		textarea = document.createElement("input")
+		textarea.classList.add("form-control", "form-control-sm")
+		textarea.setAttribute("value", data.value)
+		textarea.setAttribute("name", data.id)
+		textarea.setAttribute("id", data.id)
+		textarea.setAttribute("disabled", true)
+	} else {
+		textarea = document.createElement("textarea")
+		textarea.classList.add("form-control")
+		textarea.setAttribute("rows", numberOfRows)
+		textarea.setAttribute("name", data.id)
+		textarea.setAttribute("id", data.id)
+		if (disable) {
+			textarea.setAttribute("disabled", true)
+		}
+		
+		if (typeof(data.value) === "object") {
+			for (v of data.value) {
+				textarea.textContent += v
+				textarea.textContent += "\n\n"
+			}
+		} else {
+			textarea.textContent = data.value
+		}
+	}
+
+	div.append(label, document.createElement("br"), textarea)
+	return div
+}
+
+const addTitleToDom = (element, data, heading = 'h1') => {
+	const h1 = document.createElement(heading)
+	h1.textContent = data.title
+
+	element.append(h1)
+}
+
 // link to lias: https://www.lias-lab.fr/ftppublic/recherche/fetch.wasm
 
 // #################################################################################### PART 1 ################################################################################# //
@@ -64,6 +113,9 @@ if(location.href === "https://dbpedia.org/sparql") {
 	// let resultsInput = document.createElement('input');
 	const sparqlForm = document.querySelector('#sparql_form');
 
+	// cardinalities
+	let cardinalities = ""
+
 	// GET TRIGGERED WHENEVER THE USER CLICKS ON THE 'EXECUTE QUERY' BUTTON
 	const isFailingAlgorithm = async (e) => {
 		e.preventDefault();
@@ -83,19 +135,19 @@ if(location.href === "https://dbpedia.org/sparql") {
 			addTitleToDom(document.querySelector("#options"), { title: "BASE ALGORITHM" })
 			document.querySelector("#options").append(document.createElement("hr"))
 
-			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}))
+			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}, 0))
 
 			// Displaying the results
 			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
 			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
 			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
-			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
-			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
-			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}, 0))
 
 
-			// Call the base Algorithm in DB Pedia
+			// Call the BFS Algorithm in DB Pedia
 			resGlobal = await BFS(query, +KInput.value, "https://dbpedia.org/sparql");
 
 			// CALLING THE ISFAILING ALGORITHM
@@ -105,19 +157,18 @@ if(location.href === "https://dbpedia.org/sparql") {
 			addTitleToDom(document.querySelector("#options"), { title: "BFS ALGORITHM" })
 			document.querySelector("#options").append(document.createElement("hr"))
 
-			insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"})
+			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}, 0))
 
 			// Displaying the results
 			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
 			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
 			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
-			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
-			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
-			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}, 0))
 
-
-			// Call the base Algorithm in DB Pedia
+			// Call the Var Algorithm in DB Pedia
 			resGlobal = await Var(query, +KInput.value, "https://dbpedia.org/sparql");
 
 			// CALLING THE ISFAILING ALGORITHM
@@ -127,18 +178,17 @@ if(location.href === "https://dbpedia.org/sparql") {
 			addTitleToDom(document.querySelector("#options"), { title: "Var ALGORITHM" })
 			document.querySelector("#options").append(document.createElement("hr"))
 
-			insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"})
+			document.querySelector("#options").append(insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}, 0))
 
 			// Displaying the results
 			document.querySelector("#options").append(insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
 			document.querySelector("#options").append(insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
 
 			addTitleToDom(document.querySelector("#options"), {title: "Statistics"}, "h3")
-			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}))
-			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}))
-			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}))
-
-			// insertStats(document.querySelector("#options"), resGlobal)
+			document.querySelector("#options").append(insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}, 0))
+			document.querySelector("#options").append(insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}, 0))
+			
 		} catch (err) {
 			console.error('Caught exception', err);
 		}
@@ -154,7 +204,60 @@ if(location.href === "https://dbpedia.org/sparql") {
 				passive: true,
 			});
 		}
-	});
+	})
+
+	// FULL
+	document.querySelector("#footer").insertAdjacentElement("beforebegin", document.createElement("hr"))
+
+	const h1Full = document.createElement("h1")
+	h1Full.textContent = "Full ALGORITHM"
+	document.querySelector("#footer").insertAdjacentElement("beforebegin", h1Full)
+
+	document.querySelector("#footer").insertAdjacentElement("beforebegin", document.createElement("hr"))
+
+	document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "cardinalities", value: "", text: "Cardinalities"}, 7, false))
+
+	document.querySelector("#cardinalities").addEventListener('change', () => {
+		cardinalities = document.querySelector("#cardinalities").value
+	})
+
+	// Launch Full Algo
+	const FullAlgoBtn = document.createElement("button")
+	FullAlgoBtn.classList.add("btn", "btn-lg", "btn-m-3", "btn-info")
+	FullAlgoBtn.textContent = "Launch Full Algorithm"
+	FullAlgoBtn.id = "full"
+	document.querySelector("#footer").insertAdjacentElement("beforebegin", FullAlgoBtn)
+
+	document.querySelector("#full").addEventListener("click", async () => {
+		cardinalities = cardinalities.split("\n")
+		var cards = ""
+		for (let cardinality of cardinalities) {
+			cardinality = cardinality.split(/[()\s]+/)
+			cards += cardinality[2] + " "
+		}
+
+		// Grab the query
+		let query = document.querySelector('#query').value;
+
+
+		let resGlobal = await Full(query, +KInput.value, "https://dbpedia.org/sparql", cards) 
+		// CALLING THE ISFAILING ALGORITHM
+		isfailing = await isFailing("https://dbpedia.org/sparql", query);
+
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "isfailing", value: isfailing, text: "IsFailing returns ?"}, 0))
+
+		// Displaying the results
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "xss", value: resGlobal[0], text: "List of XSS"}, 15))
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "mfis", value: resGlobal[1], text: "List of MFIS"}, 15))
+
+		const h3Full = document.createElement("h3")
+		h3Full.textContent = "Statistics"
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", h3Full)
+
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "nb", value: resGlobal[2], text: "Number of executed queries"}, 0))
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "etMakeLattice", value: resGlobal[3], text: "Execution Time for Make Lattice algorithm"}, 0))
+		document.querySelector("#footer").insertAdjacentElement("beforebegin", insertToDOM({id: "etAllQueries", value: resGlobal[4], text: "Execution Time for All subqueries of the initial query"}, 0))
+	})
 }
 
 // ##########################################################################################################################################################################################
@@ -195,48 +298,3 @@ if (location.href === "http://localhost:3030/dataset.html") {
 	})
 }
 
-const insertToDOM = (data, numberOfRows = 0) => {
-	const div = document.createElement("div")
-	div.classList.add("form-group", "row")
-
-	const label = document.createElement("label")
-	label.setAttribute("for", data.id)
-	label.textContent = data.text
-
-	let textarea
-
-	if (numberOfRows === 0) {
-		textarea = document.createElement("input")
-		textarea.classList.add("form-control", "form-control-sm")
-		textarea.setAttribute("value", data.value)
-		textarea.setAttribute("name", data.id)
-		textarea.setAttribute("id", data.id)
-		textarea.setAttribute("disabled", true)
-	} else {
-		textarea = document.createElement("textarea")
-		textarea.classList.add("form-control")
-		textarea.setAttribute("rows", numberOfRows)
-		textarea.setAttribute("name", data.id)
-		textarea.setAttribute("id", data.id)
-		textarea.setAttribute("disabled", true)
-		
-		if (typeof(data.value) === "object") {
-			for (v of data.value) {
-				textarea.textContent += v
-				textarea.textContent += "\n\n"
-			}
-		} else {
-			textarea.textContent = data.value
-		}
-	}
-
-	div.append(label, document.createElement("br"), textarea)
-	return div
-}
-
-const addTitleToDom = (element, data, heading = 'h1') => {
-	const h1 = document.createElement(heading)
-	h1.textContent = data.title
-
-	element.append(h1)
-}
