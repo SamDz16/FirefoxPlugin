@@ -875,7 +875,7 @@ func Full(q string, K int, endpoint string, strCardsArray []string) ([]string, [
 							card, ok := predicateCards[p]
 							if ok {
 								cardArr := strings.Split(card, "-")
-								fCard, _ := strconv.ParseFloat(cardArr[1], 64)
+								fCard, _ := strconv.Atoi(cardArr[1])
 								if fCard == 1 && ExistString(GetQueryVariables(subQ), s) {
 									notToExecuteQueries = append(notToExecuteQueries, subQ)
 								}
