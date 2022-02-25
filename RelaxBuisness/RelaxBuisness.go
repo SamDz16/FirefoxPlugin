@@ -2,6 +2,7 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -116,7 +117,7 @@ func GenerateLevelTripplePatterns(triplePatterns []string, level int) []string {
 	combinations = append(combinations, triple)
 
 	if level == 0 {
-		return []string{" "}
+		return []string{""}
 	}
 
 	if level == n {
@@ -250,7 +251,7 @@ func ContainsKey(queries *map[*Query]bool, q Query) bool {
 
 	for k := range *queries {
 		qTemp := *k
-		if qTemp.Query == q.Query {
+		if strings.TrimSpace(qTemp.Query) == strings.TrimSpace(q.Query) {
 			return true
 		}
 	}
@@ -406,7 +407,7 @@ func Base(q string, K int, endpoint string) ([]string, []string, int, string, st
 			}
 		} else {
 			// qTemp has succeded
-			if parentsFIS && qTemp.Query != " " {
+			if parentsFIS && qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 				*listXSS = append(*listXSS, qTemp)
 			}
 		}
@@ -511,7 +512,7 @@ func BFS(q string, K int, endpoint string) ([]string, []string, int, string, str
 
 			} else {
 				// qTemp has succeded
-				if qTemp.Query != " " {
+				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 					*listXSS = append(*listXSS, qTemp)
 				}
 			}
@@ -655,8 +656,43 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 			i++
 		}
 
+		// if qTemp.Query == "select * where { ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
+		// 	fmt.Println(qTemp.Query)
+		// 	dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+		// 	var s Sparql
+		// 	json.Unmarshal([]byte(dataBody), &s)
+
+		// 	Nb := len(s.Results.Bindings)
+		// 	fmt.Println("NB: ", Nb)
+		// 	fmt.Println("parentsFIS: ", parentsFIS)
+		// 	fmt.Println("superqueries: ", superQueries)
+		// 	fmt.Println("list FIS: ")
+		// 	for q := range listFIS {
+		// 		fmt.Println(q)
+		// 	}
+		// }
+
+		if qTemp.Query == "select * where { ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
+			fmt.Println(parentsFIS)
+		}
+
 		if parentsFIS {
 			if !ExistQuery(notToExecuteQueries, qTemp) {
+
+				if qTemp.Query == "select * where { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
+					println("entered", parentsFIS)
+				}
+
+				if qTemp.Query == "select * where { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) || qTemp.Query == "?nation <http://dbpedia.org/ontology/language> ?lang . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
+					fmt.Println(qTemp.Query)
+					fmt.Println("parentsFIS: ", parentsFIS)
+					fmt.Println("superqueries: ", superQueries)
+
+					fmt.Println("list FIS: ")
+					for q := range listFIS {
+						fmt.Println(q)
+					}
+				}
 
 				// We execute query
 				var Nb int
@@ -703,7 +739,7 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 					}
 				} else {
 					// qTemp has succeded
-					if qTemp.Query != " " {
+					if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 						*listXSS = append(*listXSS, qTemp)
 					}
 				}
@@ -718,6 +754,16 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 	var mfis []string
 	for _, m := range *listMFIS {
 		mfis = append(mfis, m.Query)
+	}
+
+	// for q, n := range executedQueries {
+	// 	fmt.Println(*&q.Query)
+	// 	fmt.Println(n)
+	// 	fmt.Println("\n\n")
+	// }
+
+	for _, q := range notToExecuteQueries {
+		fmt.Println(q)
 	}
 
 	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
@@ -884,7 +930,7 @@ func Full(q string, K int, endpoint string, strCardsArray []string) ([]string, [
 					}
 				} else {
 					// qTemp has succeded
-					if qTemp.Query != " " {
+					if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 						*listXSS = append(*listXSS, qTemp)
 					}
 				}

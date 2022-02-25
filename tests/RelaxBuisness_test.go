@@ -154,40 +154,40 @@ import (
 // 	t.Logf("SetParents PASSED. Expected %v found %v\n", expected, queries)
 // }
 
-// func TestContainsKey(t *testing.T) {
+func TestContainsKey(t *testing.T) {
 
-// 	// Given
-// 	var q1, q2, q3, q4, q5 Query
-// 	// q5 to test that it return false
-// 	q5.Query = "select * where {t1 . t2 . t3}"
+	// Given
+	var q1, q2, q3, q4, q5 Query
+	// q5 to test that it return false
+	q5.Query = "select * where { t1 . t2 . t3 }"
 
-// 	q1.Query = "select * where {t1 . t2}"
+	q1.Query = "select * where { t1 . t2 }"
 
-// 	q2.Query = "select * where {t1}"
+	q2.Query = "select * where { t1 }"
 
-// 	q3.Query = "select * where {t2}"
+	q3.Query = "select * where { t2 }"
 
-// 	q4.Query = "select * where { }"
+	q4.Query = "select * where { }"
 
-// 	var queries map[*Query]bool = make(map[*Query]bool)
-// 	queries[&q1] = true
-// 	queries[&q2] = true
-// 	queries[&q3] = false
-// 	queries[&q4] = true
+	var queries map[*Query]bool = make(map[*Query]bool)
+	queries[&q1] = true
+	queries[&q2] = true
+	queries[&q3] = true
+	queries[&q4] = true
 
-// 	// When
-// 	results := ContainsKey(&queries, q1)
+	// When
+	result := ContainsKey(&queries, q1)
 
-// 	// Then
-// 	expected := true
+	// Then
+	expected := true
 
-// 	if results == expected {
-// 		t.Logf("ContainsKey PASSED. Expected %v found %v\n", expected, queries)
-// 		return
-// 	} else {
-// 		t.Errorf("ContainsKey FAILED. Expected %v found %v\n", expected, results)
-// 	}
-// }
+	if result == expected {
+		t.Logf("ContainsKey PASSED. Expected %v found %v\n", expected, result)
+		return
+	} else {
+		t.Errorf("ContainsKey FAILED. Expected %v found %v\n", expected, result)
+	}
+}
 
 // func TestFindQuery(t *testing.T) {
 
@@ -332,21 +332,21 @@ import (
 // 	}
 // }
 
-func TestExistString(t *testing.T) {
-	// Given
-	strs := []string{"<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", "<http://dbpedia.org/ontology/starring>", "<http://www.w3.org/2000/01/rdf-schema#comment>"}
-	str := "<http://www.w3.org/2000/01/rdf-schema#comment>"
+// func TestExistString(t *testing.T) {
+// 	// Given
+// 	strs := []string{"<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", "<http://dbpedia.org/ontology/starring>", "<http://www.w3.org/2000/01/rdf-schema#comment>"}
+// 	str := "<http://www.w3.org/2000/01/rdf-schema#comment>"
 
-	// when
-	result := ExistString(strs, str)
+// 	// when
+// 	result := ExistString(strs, str)
 
-	// Then
-	expected := true
+// 	// Then
+// 	expected := true
 
-	if result == expected {
-		t.Logf("ExistString PASSED. Expected %v found %v \n", expected, result)
-		return
-	} else {
-		t.Errorf("ExistString FAILED. Expected %v found %v \n", expected, result)
-	}
-}
+// 	if result == expected {
+// 		t.Logf("ExistString PASSED. Expected %v found %v \n", expected, result)
+// 		return
+// 	} else {
+// 		t.Errorf("ExistString FAILED. Expected %v found %v \n", expected, result)
+// 	}
+// }
