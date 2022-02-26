@@ -1,7 +1,78 @@
 ## Docker command:
 docker run --name fuseki -d  -p 3030:3030 -e ADMIN_PASSWORD=pw123 stain/jena-fuseki
 
-## DBPEDIA Query:
+#####################################################################################################
+###################################       T E S T 1        ##########################################
+##################################################################################################### 
+
+## DBPEDIA QUERY TEST 1:
 SELECT * WHERE { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }
 
+# Cardinalities:
+(<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>,0,5)
+(<http://dbpedia.org/ontology/starring>,0,66)
+(<http://www.w3.org/2000/01/rdf-schema#comment>,0,12329)
+(<http://www.w3.org/2000/01/rdf-schema#label>,0,13547)
+(<http://dbpedia.org/ontology/releaseDate>,0,33)
+
+# K = 100
+
+# EXPECTED RESULTS:
+- MFIS:
+{
+    "number": 1,
+    "queries": [
+        "select * where { ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label }"
+    ]
+}
+
+- XSS:
+{
+    "number": 3,
+    "queries": [
+        "select * where { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }",
+        "select * where { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }",
+        "select * where { ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> . ?subject <http://dbpedia.org/ontology/starring> <http://dbpedia.org/resource/Sandra_Dee> . ?subject <http://dbpedia.org/ontology/starring> ?actors . ?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?abstract . ?subject <http://dbpedia.org/ontology/releaseDate> ?released }"
+    ]
+}
+
+- BASE: 63
+- BFS: 11
+- VAR: 5
+- FULL: 5
+
+
+#####################################################################################################
+###################################       T E S T 2        ##########################################
+#####################################################################################################
+
+# DBPEDIA QUERY TEST 2:
 SELECT * WHERE { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://dbpedia.org/ontology/language> ?lang . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail }
+
+# Cardinalities:
+(<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>,0,5)
+(<http://dbpedia.org/ontology/language>,0,85)
+(<http://www.w3.org/2000/01/rdf-schema#comment>,0,12329)
+(<http://dbpedia.org/ontology/thumbnail>,0,1)
+
+# K = 2500
+
+# EXPECTED RESULTS:
+- MFIS: {
+    "number": 1,
+    "queries": [
+        "select * where { ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com }"
+    ]
+}
+
+- XSS: {
+    "number": 1,
+    "queries": [
+        "select * where { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://dbpedia.org/ontology/language> ?lang . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail }"
+    ]
+}
+
+- BASE: 31
+- BFS: 17
+- VAR: 5
+- FULL: 3

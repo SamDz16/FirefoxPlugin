@@ -154,40 +154,40 @@ import (
 // 	t.Logf("SetParents PASSED. Expected %v found %v\n", expected, queries)
 // }
 
-func TestContainsKey(t *testing.T) {
+// func TestContainsKey(t *testing.T) {
 
-	// Given
-	var q1, q2, q3, q4, q5 Query
-	// q5 to test that it return false
-	q5.Query = "select * where { t1 . t2 . t3 }"
+// 	// Given
+// 	var q1, q2, q3, q4, q5 Query
+// 	// q5 to test that it return false
+// 	q5.Query = "select * where { t1 . t2 . t3 }"
 
-	q1.Query = "select * where { t1 . t2 }"
+// 	q1.Query = "select * where { t1 . t2 }"
 
-	q2.Query = "select * where { t1 }"
+// 	q2.Query = "select * where { t1 }"
 
-	q3.Query = "select * where { t2 }"
+// 	q3.Query = "select * where { t2 }"
 
-	q4.Query = "select * where { }"
+// 	q4.Query = "select * where { }"
 
-	var queries map[*Query]bool = make(map[*Query]bool)
-	queries[&q1] = true
-	queries[&q2] = true
-	queries[&q3] = true
-	queries[&q4] = true
+// 	var queries map[*Query]bool = make(map[*Query]bool)
+// 	queries[&q1] = true
+// 	queries[&q2] = true
+// 	queries[&q3] = true
+// 	queries[&q4] = true
 
-	// When
-	result := ContainsKey(&queries, q1)
+// 	// When
+// 	result := ContainsKey(&queries, q1)
 
-	// Then
-	expected := true
+// 	// Then
+// 	expected := true
 
-	if result == expected {
-		t.Logf("ContainsKey PASSED. Expected %v found %v\n", expected, result)
-		return
-	} else {
-		t.Errorf("ContainsKey FAILED. Expected %v found %v\n", expected, result)
-	}
-}
+// 	if result == expected {
+// 		t.Logf("ContainsKey PASSED. Expected %v found %v\n", expected, result)
+// 		return
+// 	} else {
+// 		t.Errorf("ContainsKey FAILED. Expected %v found %v\n", expected, result)
+// 	}
+// }
 
 // func TestFindQuery(t *testing.T) {
 
@@ -288,25 +288,25 @@ func TestContainsKey(t *testing.T) {
 // 	}
 // }
 
-// func TestExtractTPProperties(t *testing.T) {
-// 	// Given
-// 	tp := " ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film>"
+func TestExtractTPProperties(t *testing.T) {
+	// Given
+	tp := " ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film>"
 
-// 	// when
-// 	s, p, o := ExtractTPProperties(tp)
+	// when
+	s, p, o := ExtractTPProperties(tp)
 
-// 	// Then
-// 	sExpected := "?subject"
-// 	pExpected := "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-// 	oExpected := "<http://dbpedia.org/ontology/Film>"
+	// Then
+	sExpected := "subject"
+	pExpected := "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+	oExpected := "<http://dbpedia.org/ontology/Film>"
 
-// 	if s == sExpected && p == pExpected && o == oExpected {
-// 		t.Logf("ExtractTPProperties PASSED. Expected %v %v %v found %v %v %v \n", sExpected, pExpected, oExpected, s, p, o)
-// 		return
-// 	} else {
-// 		t.Errorf("ExtractTPProperties FAILED. Expected %v %v %v found %v %v %v \n", sExpected, pExpected, oExpected, s, p, o)
-// 	}
-// }
+	if s == sExpected && p == pExpected && o == oExpected {
+		t.Logf("ExtractTPProperties PASSED. Expected %v %v %v found %v %v %v \n", sExpected, pExpected, oExpected, s, p, o)
+		return
+	} else {
+		t.Errorf("ExtractTPProperties FAILED. Expected %v %v %v found %v %v %v \n", sExpected, pExpected, oExpected, s, p, o)
+	}
+}
 
 // func TestGetPredicates(t *testing.T) {
 // 	// Given

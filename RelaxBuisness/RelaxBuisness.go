@@ -2,7 +2,6 @@ package RelaxBuisness
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -639,8 +638,6 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		// NO QUERY EXECUTED HERE
-
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
 		MakeQueries(qTemp.Parents, &superQueries, K)
@@ -656,92 +653,57 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 			i++
 		}
 
-		// if qTemp.Query == "select * where { ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
-		// 	fmt.Println(qTemp.Query)
-		// 	dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
-		// 	var s Sparql
-		// 	json.Unmarshal([]byte(dataBody), &s)
-
-		// 	Nb := len(s.Results.Bindings)
-		// 	fmt.Println("NB: ", Nb)
-		// 	fmt.Println("parentsFIS: ", parentsFIS)
-		// 	fmt.Println("superqueries: ", superQueries)
-		// 	fmt.Println("list FIS: ")
-		// 	for q := range listFIS {
-		// 		fmt.Println(q)
-		// 	}
-		// }
-
-		if qTemp.Query == "select * where { ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
-			fmt.Println(parentsFIS)
-		}
-
 		if parentsFIS {
+
+			var Nb int
+			// If the query is not among those to not be executed
 			if !ExistQuery(notToExecuteQueries, qTemp) {
-
-				if qTemp.Query == "select * where { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
-					println("entered", parentsFIS)
-				}
-
-				if qTemp.Query == "select * where { ?lang <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Language> . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) || qTemp.Query == "?nation <http://dbpedia.org/ontology/language> ?lang . ?nation <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> . ?nation <http://www.w3.org/2000/01/rdf-schema#comment> ?com . ?nation <http://dbpedia.org/ontology/thumbnail> ?nail } limit "+strconv.Itoa(K+1) {
-					fmt.Println(qTemp.Query)
-					fmt.Println("parentsFIS: ", parentsFIS)
-					fmt.Println("superqueries: ", superQueries)
-
-					fmt.Println("list FIS: ")
-					for q := range listFIS {
-						fmt.Println(q)
-					}
-				}
-
 				// We execute query
-				var Nb int
-
 				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 
-					dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
-					var s Sparql
-					json.Unmarshal([]byte(dataBody), &s)
+				dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+				var s Sparql
+				json.Unmarshal([]byte(dataBody), &s)
 
-					Nb = len(s.Results.Bindings)
-					executedQueries[&qTemp] = Nb
+				Nb = len(s.Results.Bindings)
+				executedQueries[&qTemp] = Nb
 				} else {
 					Nb = 1
 				}
+			}
 
-				if Nb > K {
-					// Query qTemp fails : FIS
+			if Nb > K || ExistQuery(notToExecuteQueries, qTemp) {
+				// Query qTemp fails : FIS
 
-					// We remove all the superqueries of qTemp from listMFIS list
-					for _, qSQ := range superQueries {
-						index, found := FindQuery(*listMFIS, qSQ)
-						if found {
-							*listMFIS = RemoveQuery(*listMFIS, index)
-						}
+				// We remove all the superqueries of qTemp from listMFIS list
+				for _, qSQ := range superQueries {
+					index, found := FindQuery(*listMFIS, qSQ)
+					if found {
+						*listMFIS = RemoveQuery(*listMFIS, index)
 					}
+				}
 
-					// Since the request qTemp has failed, we add it to the list of FIS
-					listFIS[&qTemp] = true
+				// Since the request qTemp has failed, we add it to the list of FIS
+				listFIS[&qTemp] = true
 
-					// qTemps is the new MFIS
-					*listMFIS = append(*listMFIS, qTemp)
+				// qTemps is the new MFIS
+				*listMFIS = append(*listMFIS, qTemp)
 
-					// Var property
-					// Get qTemp Triple Patterns
-					qTempTPs := GetQueryTripplePatterns(qTemp)
-					for _, tp := range qTempTPs {
-						// subQ is {qtemp - tp}
-						subQ := RemoveQueryTriplePattern(qTemp, tp, K)
-						if len(GetQueryVariables(subQ)) == len(GetQueryVariables(qTemp)) {
-							// executedQueries[&subQ] = K + 1
-							notToExecuteQueries = append(notToExecuteQueries, subQ)
-						}
+				// Var property
+				// Get qTemp Triple Patterns
+				qTempTPs := GetQueryTripplePatterns(qTemp)
+				for _, tp := range qTempTPs {
+					// subQ is {qtemp - tp}
+					subQ := RemoveQueryTriplePattern(qTemp, tp, K)
+					if len(GetQueryVariables(subQ)) == len(GetQueryVariables(qTemp)) {
+						// We add this failing query to the listFIS
+						notToExecuteQueries = append(notToExecuteQueries, subQ)
 					}
-				} else {
-					// qTemp has succeded
-					if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
-						*listXSS = append(*listXSS, qTemp)
-					}
+				}
+			} else {
+				// qTemp has succeded
+				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
+					*listXSS = append(*listXSS, qTemp)
 				}
 			}
 		}
@@ -756,23 +718,26 @@ func Var(q string, K int, endpoint string) ([]string, []string, int, string, str
 		mfis = append(mfis, m.Query)
 	}
 
-	// for q, n := range executedQueries {
-	// 	fmt.Println(*&q.Query)
-	// 	fmt.Println(n)
-	// 	fmt.Println("\n\n")
-	// }
-
-	for _, q := range notToExecuteQueries {
-		fmt.Println(q)
-	}
-
 	return xss, mfis, len(executedQueries), makeLatticeTime.String(), executingQueriesTime.String()
 }
 
 func ExtractTPProperties(tp string) (string, string, string) {
 	tp = strings.TrimSpace(tp)
 	props := strings.Split(tp, " ")
-	return props[0], props[1], props[2]
+	s := props[0]
+	p := props[1]
+	o := props[2]
+
+	if s[0] == '?' {
+		s = s[1:]
+	}
+	if p[0] == '?'{
+		p = p[1:]
+	}
+	if o[0] == '?' {
+		o = o[1:]
+	}
+	return s, p, o
 }
 
 func GetPredicates(q Query) []string {
@@ -854,8 +819,6 @@ func Full(q string, K int, endpoint string, strCardsArray []string) ([]string, [
 		// Remove the first element from the list
 		listQueries = listQueries[1:]
 
-		// NO QUERY EXECUTED HERE
-
 		// Get Direct Super Queries Of 'qTemp'
 		var superQueries []Query
 		MakeQueries(qTemp.Parents, &superQueries, K)
@@ -872,67 +835,68 @@ func Full(q string, K int, endpoint string, strCardsArray []string) ([]string, [
 		}
 
 		if parentsFIS {
+
+			var Nb int
+			// If the query is not among those to not be executed
 			if !ExistQuery(notToExecuteQueries, qTemp) {
-
 				// We execute query
-				var Nb int
-
 				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
 
-					dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
-					var s Sparql
-					json.Unmarshal([]byte(dataBody), &s)
+				dataBody := ExecuteSPARQLQuery(endpoint, qTemp.Query)
+				var s Sparql
+				json.Unmarshal([]byte(dataBody), &s)
 
-					Nb = len(s.Results.Bindings)
-					executedQueries[&qTemp] = Nb
+				Nb = len(s.Results.Bindings)
+				executedQueries[&qTemp] = Nb
 				} else {
 					Nb = 1
 				}
+			}
 
-				if Nb > K {
-					// Query qTemp fails : FIS
+			if Nb > K || ExistQuery(notToExecuteQueries, qTemp) {
+				// Query qTemp fails : FIS
 
-					// We remove all the superqueries of qTemp from listMFIS list
-					for _, qSQ := range superQueries {
-						index, found := FindQuery(*listMFIS, qSQ)
-						if found {
-							*listMFIS = RemoveQuery(*listMFIS, index)
-						}
+				// We remove all the superqueries of qTemp from listMFIS list
+				for _, qSQ := range superQueries {
+					index, found := FindQuery(*listMFIS, qSQ)
+					if found {
+						*listMFIS = RemoveQuery(*listMFIS, index)
 					}
+				}
 
-					// Since the request qTemp has failed, we add it to the list of FIS
-					listFIS[&qTemp] = true
+				// Since the request qTemp has failed, we add it to the list of FIS
+				listFIS[&qTemp] = true
 
-					// qTemps is the new MFIS
-					*listMFIS = append(*listMFIS, qTemp)
+				// qTemps is the new MFIS
+				*listMFIS = append(*listMFIS, qTemp)
 
-					// Var property
-					// Get qTemp Triple Patterns
-					qTempTPs := GetQueryTripplePatterns(qTemp)
-					for _, tp := range qTempTPs {
-						// subQ is {qtemp - tp}
-						subQ := RemoveQueryTriplePattern(qTemp, tp, K)
-						if len(GetQueryVariables(subQ)) == len(GetQueryVariables(qTemp)) {
-							// executedQueries[&subQ] = K + 1
-							notToExecuteQueries = append(notToExecuteQueries, subQ)
-						} else {
-							// Full
-							s, p, _ := ExtractTPProperties(tp)
-							card, ok := predicateCards[p]
-							if ok {
-								cardArr := strings.Split(card, "-")
-								fCard, _ := strconv.Atoi(cardArr[1])
-								if fCard == 1 && ExistString(GetQueryVariables(subQ), s) {
-									notToExecuteQueries = append(notToExecuteQueries, subQ)
-								}
+				// Var property
+				// Get qTemp Triple Patterns
+				qTempTPs := GetQueryTripplePatterns(qTemp)
+				for _, tp := range qTempTPs {
+					// subQ is {qtemp - tp}
+					subQ := RemoveQueryTriplePattern(qTemp, tp, K)
+					if len(GetQueryVariables(subQ)) == len(GetQueryVariables(qTemp)) {
+						// We add this failing query to the listFIS
+						notToExecuteQueries = append(notToExecuteQueries, subQ)
+					} else {
+						// Full
+						s, p, _ := ExtractTPProperties(tp)
+						card, ok := predicateCards[p]
+						if ok {
+							cardArr := strings.Split(card, "-")
+							fCard, _ := strconv.Atoi(cardArr[1])
+							
+							if fCard == 1 && ExistString(GetQueryVariables(subQ), s) {
+								notToExecuteQueries = append(notToExecuteQueries, subQ)
 							}
 						}
 					}
-				} else {
-					// qTemp has succeded
-					if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
-						*listXSS = append(*listXSS, qTemp)
-					}
+				}
+			} else {
+				// qTemp has succeded
+				if qTemp.Query != "select * where {  } limit "+strconv.Itoa(K+1) {
+					*listXSS = append(*listXSS, qTemp)
 				}
 			}
 		}
